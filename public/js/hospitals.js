@@ -3,6 +3,7 @@
 // ============================================
 
 let allHospitals = [];
+let allHospitalsCache = []; // always holds full list for search
 let userLat = null;
 let userLng = null;
 
@@ -15,6 +16,11 @@ async function loadHospitals() {
     const dept = params.get('department');
     const fromSymptoms = params.get('from') === 'symptoms';
 
+    // Always load full list into cache for search
+    const allRes = await fetch(`${API}/hospitals`);
+    const allData = await allRes.json();
+    if (allData.success) allHospitalsCache = allData.data;
+
     if (lat && lng) {
       userLat = parseFloat(lat);
       userLng = parseFloat(lng);
@@ -24,15 +30,9 @@ async function loadHospitals() {
       const radius = document.getElementById('radiusFilter').value;
       await fetchNearby(userLat, userLng, radius, dept);
     } else {
-      const res = await fetch(`${API}/hospitals`);
-      const data = await res.json();
-      if (data.success) {
-        allHospitals = data.data;
-        renderHospitals(allHospitals);
-        document.getElementById('searchSummary').textContent = `Showing all hospitals`;
-      } else {
-        showToast('Failed to load hospitals');
-      }
+      allHospitals = allHospitalsCache;
+      renderHospitals(allHospitals);
+      document.getElementById('searchSummary').textContent = `Showing all hospitals`;
     }
   } catch (err) {
     showToast('Server error. Please try again.');
@@ -76,31 +76,52 @@ function renderHospitals(list) {
   container.innerHTML = list.map(h => renderHospitalCard(h)).join('');
 }
 
-// Client-side filters: dept, status, search only (radius handled server-side)
 function applyClientFilters() {
   const deptVal = document.getElementById('deptFilter').value.toLowerCase();
   const statusVal = document.getElementById('statusFilter').value;
-  const searchVal = document.getElementById('searchInput').value.toLowerCase();
+  const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
 
+  // If searching by name/address — search ALL hospitals ignoring radius
+  if (searchVal) {
+    const filtered = allHospitalsCache.filter(h => {
+      const matchSearch = h.name.toLowerCase().includes(searchVal) ||
+        (h.address || '').toLowerCase().includes(searchVal) ||
+        (h.city || '').toLowerCase().includes(searchVal);
+      const matchDept = !deptVal || (h.departments || []).some(d => d.toLowerCase().includes(deptVal));
+      const matchStatus = !statusVal ||
+        (statusVal === 'available' && h.emergency_available) ||
+        (statusVal === 'busy' && !h.emergency_available);
+      return matchSearch && matchDept && matchStatus;
+    });
+    document.getElementById('searchSummary').textContent = `${filtered.length} result(s) for "${searchVal}"`;
+    renderHospitals(filtered);
+    return;
+  }
+
+  // No search text — filter from radius-based list
   let filtered = allHospitals.filter(h => {
     const matchDept = !deptVal || (h.departments || []).some(d => d.toLowerCase().includes(deptVal));
     const matchStatus = !statusVal ||
       (statusVal === 'available' && h.emergency_available) ||
       (statusVal === 'busy' && !h.emergency_available);
-    const matchSearch = !searchVal || h.name.toLowerCase().includes(searchVal) ||
-      (h.address || '').toLowerCase().includes(searchVal);
-    return matchDept && matchStatus && matchSearch;
+    return matchDept && matchStatus;
   });
 
   renderHospitals(filtered);
 }
 
-// Called when any filter changes including radius
 async function applyFilters() {
+  const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+
+  // If user is typing in search — just do client-side search, no location needed
+  if (searchVal) {
+    applyClientFilters();
+    return;
+  }
+
   const radius = parseFloat(document.getElementById('radiusFilter').value);
 
   if (userLat && userLng) {
-    // Location already known — re-fetch with new radius
     showLoading(`Searching within ${radius}km...`);
     try {
       await fetchNearby(userLat, userLng, radius);
@@ -110,7 +131,6 @@ async function applyFilters() {
       hideLoading();
     }
   } else {
-    // No location yet — auto-detect first then apply radius
     if (!navigator.geolocation) {
       showToast('Geolocation not supported. Radius filter needs your location.');
       applyClientFilters();

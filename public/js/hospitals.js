@@ -95,11 +95,12 @@ function applyClientFilters() {
   renderHospitals(filtered);
 }
 
-// Called when radius changes — re-fetch from server if location is known
+// Called when any filter changes including radius
 async function applyFilters() {
   const radius = parseFloat(document.getElementById('radiusFilter').value);
 
   if (userLat && userLng) {
+    // Location already known — re-fetch with new radius
     showLoading(`Searching within ${radius}km...`);
     try {
       await fetchNearby(userLat, userLng, radius);
@@ -109,8 +110,32 @@ async function applyFilters() {
       hideLoading();
     }
   } else {
-    // No location — just apply client-side filters
-    applyClientFilters();
+    // No location yet — auto-detect first then apply radius
+    if (!navigator.geolocation) {
+      showToast('Geolocation not supported. Radius filter needs your location.');
+      applyClientFilters();
+      return;
+    }
+    showLoading('Detecting your location for radius filter...');
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        userLat = pos.coords.latitude;
+        userLng = pos.coords.longitude;
+        try {
+          await fetchNearby(userLat, userLng, radius);
+          showToast(`Showing hospitals within ${radius}km`, 'success');
+        } catch (e) {
+          showToast('Error fetching nearby hospitals');
+        } finally {
+          hideLoading();
+        }
+      },
+      () => {
+        hideLoading();
+        showToast('Could not get location. Please click "Near Me" first.');
+        applyClientFilters();
+      }
+    );
   }
 }
 

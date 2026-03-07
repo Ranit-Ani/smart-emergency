@@ -3,187 +3,177 @@
 // ============================================
 
 const SYMPTOM_MAP = {
-  heart_attack:        { dept: 'Cardiology',       label: 'Heart Attack' },
-  chest_pain:          { dept: 'Cardiology',       label: 'Chest Pain' },
-  stroke:              { dept: 'Neurology',        label: 'Stroke' },
-  accident:            { dept: 'Trauma Center',   label: 'Accident / Trauma' },
-  high_fever:          { dept: 'General Medicine', label: 'High Fever' },
-  breathing_problem:   { dept: 'Cardiology',       label: 'Breathing Problem' },
-  pregnancy_emergency: { dept: 'Gynecology',       label: 'Pregnancy Emergency' },
-  poisoning:           { dept: 'Emergency Medicine', label: 'Poisoning' },
-  severe_bleeding:     { dept: 'Trauma Center',   label: 'Severe Bleeding' },
-  unconscious:         { dept: 'Emergency Medicine', label: 'Unconscious' },
-  bone_fracture:       { dept: 'Trauma Center',   label: 'Bone Fracture' },
-  burn:                { dept: 'Emergency Medicine', label: 'Burns' },
+  // Cardiology
+  heart_attack:        { dept: 'Cardiology',        label: 'Heart Attack' },
+  chest_pain:          { dept: 'Cardiology',        label: 'Chest Pain' },
+  breathing_problem:   { dept: 'Pulmonology',       label: 'Breathing Problem' },
+  // Neurology
+  stroke:              { dept: 'Neurology',         label: 'Stroke' },
+  seizure:             { dept: 'Neurology',         label: 'Seizure / Fits' },
+  // Trauma
+  accident:            { dept: 'Trauma Center',     label: 'Accident / Trauma' },
+  severe_bleeding:     { dept: 'Trauma Center',     label: 'Severe Bleeding' },
+  bone_fracture:       { dept: 'Orthopedics',       label: 'Bone Fracture' },
+  // General
+  high_fever:          { dept: 'General Medicine',  label: 'High Fever' },
+  vomiting:            { dept: 'General Medicine',  label: 'Vomiting / Diarrhea' },
+  // Gynecology
+  pregnancy_emergency: { dept: 'Gynecology',        label: 'Pregnancy Emergency' },
+  // Emergency
+  poisoning:           { dept: 'Emergency Medicine',label: 'Poisoning' },
+  unconscious:         { dept: 'Emergency Medicine',label: 'Unconscious' },
+  burn:                { dept: 'Burns Unit',         label: 'Burns Injury' },
+  // Pediatrics
+  child_emergency:     { dept: 'Pediatrics',        label: 'Child Emergency' },
+  // Eye
+  eye_injury:          { dept: 'Ophthalmology',     label: 'Eye Injury' },
+  // Mental Health
+  mental_crisis:       { dept: 'Psychiatry',        label: 'Mental Health Crisis' },
+  // Kidney
+  kidney_pain:         { dept: 'Nephrology',        label: 'Kidney / Urine Problem' },
+  // Cancer
+  cancer_emergency:    { dept: 'Oncology',          label: 'Cancer Emergency' },
+  // ENT
+  ear_nose_throat:     { dept: 'ENT',               label: 'Ear / Nose / Throat' },
 };
 
-const AI_KEYWORDS = {
-  'chest': { dept: 'Cardiology', msg: 'Possible cardiac emergency' },
-  'heart': { dept: 'Cardiology', msg: 'Possible heart condition' },
-  'pain left arm': { dept: 'Cardiology', msg: 'Possible heart attack symptom' },
-  'stroke': { dept: 'Neurology', msg: 'Possible stroke — act FAST' },
-  'paralysis': { dept: 'Neurology', msg: 'Possible neurological emergency' },
-  'breathin': { dept: 'Cardiology', msg: 'Possible respiratory/cardiac emergency' },
-  'pregnant': { dept: 'Gynecology', msg: 'Pregnancy emergency' },
-  'labour': { dept: 'Gynecology', msg: 'Active labour emergency' },
-  'accident': { dept: 'Trauma Center', msg: 'Trauma / injury emergency' },
-  'bleed': { dept: 'Trauma Center', msg: 'Possible severe bleeding' },
-  'fever': { dept: 'General Medicine', msg: 'High fever — general medicine' },
-  'poison': { dept: 'Emergency Medicine', msg: 'Poisoning emergency' },
-  'unconscious': { dept: 'Emergency Medicine', msg: 'Loss of consciousness' },
-  'faint': { dept: 'Emergency Medicine', msg: 'Syncope / fainting' },
-  'burn': { dept: 'Emergency Medicine', msg: 'Burns injury' },
-  'fracture': { dept: 'Trauma Center', msg: 'Bone fracture / ortho trauma' },
-  'child': { dept: 'General Medicine', msg: 'Paediatric emergency' },
+const KEYWORD_MAP = {
+  // Cardiology
+  'chest':          { dept: 'Cardiology',        msg: 'Possible cardiac emergency' },
+  'heart':          { dept: 'Cardiology',        msg: 'Possible heart condition' },
+  'pain left arm':  { dept: 'Cardiology',        msg: 'Possible heart attack symptom' },
+  'palpitation':    { dept: 'Cardiology',        msg: 'Heart rhythm issue' },
+  // Neurology
+  'stroke':         { dept: 'Neurology',         msg: 'Possible stroke — act FAST' },
+  'paralysis':      { dept: 'Neurology',         msg: 'Possible neurological emergency' },
+  'seizure':        { dept: 'Neurology',         msg: 'Seizure emergency' },
+  'fits':           { dept: 'Neurology',         msg: 'Possible seizure / fits' },
+  'convulsion':     { dept: 'Neurology',         msg: 'Convulsion emergency' },
+  // Breathing
+  'breathin':       { dept: 'Pulmonology',       msg: 'Possible respiratory emergency' },
+  'asthma':         { dept: 'Pulmonology',       msg: 'Asthma attack' },
+  'lungs':          { dept: 'Pulmonology',       msg: 'Lung emergency' },
+  // Gynecology
+  'pregnant':       { dept: 'Gynecology',        msg: 'Pregnancy emergency' },
+  'labour':         { dept: 'Gynecology',        msg: 'Active labour emergency' },
+  'delivery':       { dept: 'Gynecology',        msg: 'Delivery emergency' },
+  // Trauma
+  'accident':       { dept: 'Trauma Center',     msg: 'Trauma / injury emergency' },
+  'bleed':          { dept: 'Trauma Center',     msg: 'Possible severe bleeding' },
+  // Orthopedics
+  'fracture':       { dept: 'Orthopedics',       msg: 'Bone fracture' },
+  'bone':           { dept: 'Orthopedics',       msg: 'Bone / joint injury' },
+  'joint':          { dept: 'Orthopedics',       msg: 'Joint emergency' },
+  'spine':          { dept: 'Orthopedics',       msg: 'Spinal injury' },
+  // General
+  'fever':          { dept: 'General Medicine',  msg: 'High fever — general medicine' },
+  'vomit':          { dept: 'General Medicine',  msg: 'Vomiting / GI emergency' },
+  'diarrhea':       { dept: 'General Medicine',  msg: 'Diarrhea / dehydration' },
+  'dengue':         { dept: 'General Medicine',  msg: 'Dengue / viral fever' },
+  'malaria':        { dept: 'General Medicine',  msg: 'Malaria emergency' },
+  // Emergency
+  'poison':         { dept: 'Emergency Medicine',msg: 'Poisoning emergency' },
+  'unconscious':    { dept: 'Emergency Medicine',msg: 'Loss of consciousness' },
+  'faint':          { dept: 'Emergency Medicine',msg: 'Syncope / fainting' },
+  // Burns
+  'burn':           { dept: 'Burns Unit',         msg: 'Burns injury' },
+  'fire':           { dept: 'Burns Unit',         msg: 'Fire / burns injury' },
+  // Pediatrics
+  'child':          { dept: 'Pediatrics',        msg: 'Paediatric emergency' },
+  'baby':           { dept: 'Pediatrics',        msg: 'Infant / baby emergency' },
+  'newborn':        { dept: 'Neonatology',       msg: 'Newborn emergency' },
+  'infant':         { dept: 'Pediatrics',        msg: 'Infant emergency' },
+  // Eye
+  'eye':            { dept: 'Ophthalmology',     msg: 'Eye emergency' },
+  'vision':         { dept: 'Ophthalmology',     msg: 'Vision / eye emergency' },
+  'blind':          { dept: 'Ophthalmology',     msg: 'Vision loss emergency' },
+  // Psychiatry
+  'suicide':        { dept: 'Psychiatry',        msg: 'Mental health crisis — seek help immediately' },
+  'mental':         { dept: 'Psychiatry',        msg: 'Mental health emergency' },
+  'psychiatric':    { dept: 'Psychiatry',        msg: 'Psychiatric emergency' },
+  // Kidney
+  'kidney':         { dept: 'Nephrology',        msg: 'Kidney emergency' },
+  'urine':          { dept: 'Nephrology',        msg: 'Urinary emergency' },
+  'dialysis':       { dept: 'Dialysis',          msg: 'Dialysis emergency' },
+  // ENT
+  'ear':            { dept: 'ENT',               msg: 'Ear emergency' },
+  'throat':         { dept: 'ENT',               msg: 'Throat emergency' },
+  'nose bleed':     { dept: 'ENT',               msg: 'Nasal bleeding / ENT emergency' },
+  // Skin
+  'rash':           { dept: 'Dermatology',       msg: 'Skin rash / allergic reaction' },
+  'skin':           { dept: 'Dermatology',       msg: 'Skin emergency' },
+  // Cancer
+  'cancer':         { dept: 'Oncology',          msg: 'Cancer / oncology emergency' },
 };
 
-let selectedSymptoms = [];
-let userLat = null;
-let userLng = null;
+let selectedSymptoms = new Set();
 
-function toggleSymptom(btn) {
-  const sym = btn.dataset.symptom;
-  if (btn.classList.contains('selected')) {
-    btn.classList.remove('selected');
-    selectedSymptoms = selectedSymptoms.filter(s => s !== sym);
-  } else {
-    btn.classList.add('selected');
-    selectedSymptoms.push(sym);
-  }
-  updateSelectedPanel();
-  checkFindReady();
+function getDept() {
+  const depts = selectedSymptoms.size > 0
+    ? [...selectedSymptoms].map(s => SYMPTOM_MAP[s]?.dept).filter(Boolean)
+    : [];
+  if (!depts.length) return null;
+  const freq = {};
+  depts.forEach(d => freq[d] = (freq[d] || 0) + 1);
+  return Object.keys(freq).reduce((a, b) => freq[a] >= freq[b] ? a : b);
 }
 
-function updateSelectedPanel() {
-  const section = document.getElementById('selectedSection');
-  const tagsDiv = document.getElementById('selectedTags');
-  const deptText = document.getElementById('deptText');
-
-  if (selectedSymptoms.length === 0) {
-    section.style.display = 'none';
-    return;
+function toggleSymptom(el, key) {
+  if (selectedSymptoms.has(key)) {
+    selectedSymptoms.delete(key);
+    el.classList.remove('active');
+  } else {
+    selectedSymptoms.add(key);
+    el.classList.add('active');
   }
-
-  section.style.display = 'block';
-  tagsDiv.innerHTML = selectedSymptoms.map(s => `
-    <span style="background:rgba(230,57,70,0.12);border:1px solid rgba(230,57,70,0.3);color:var(--red);padding:5px 14px;border-radius:20px;font-size:0.85rem;font-family:var(--font-body);">
-      ${SYMPTOM_MAP[s]?.label || s}
-    </span>
-  `).join('');
-
+  const deptText = document.getElementById('deptText');
   const dept = getDept();
   deptText.textContent = dept || 'Emergency Medicine';
 }
 
-function getDept() {
-  if (selectedSymptoms.length === 0) return null;
-  const depts = selectedSymptoms.map(s => SYMPTOM_MAP[s]?.dept).filter(Boolean);
-  // Return most common
-  const freq = {};
-  depts.forEach(d => freq[d] = (freq[d] || 0) + 1);
-  return Object.entries(freq).sort((a,b) => b[1]-a[1])[0]?.[0] || 'Emergency Medicine';
-}
-
-function analyzeManual() {
-  const input = document.getElementById('manualInput').value.trim().toLowerCase();
-  if (!input) { showToast('Please type a symptom or description'); return; }
-
-  const resultDiv = document.getElementById('aiResult');
-  const resultText = document.getElementById('aiResultText');
+function analyzeText() {
+  const input = document.getElementById('aiInput').value.toLowerCase();
+  const resultText = document.getElementById('aiResult');
+  if (!input.trim()) { showToast('Please describe your symptoms'); return; }
 
   let matched = null;
-  for (const [keyword, data] of Object.entries(AI_KEYWORDS)) {
-    if (input.includes(keyword)) { matched = data; break; }
+  for (const [keyword, val] of Object.entries(KEYWORD_MAP)) {
+    if (input.includes(keyword)) { matched = val; break; }
   }
 
   if (matched) {
     resultText.innerHTML = `
-      <div style="margin-bottom:4px;">⚕️ <strong>${matched.msg}</strong></div>
+      <div style="color:var(--green-alert);font-weight:600;">✅ Symptoms Analysed</div>
       <div style="color:var(--gray);font-size:0.88rem;">Recommended Department: <span style="color:var(--cyan);">${matched.dept}</span></div>
-    `;
-    // Auto-select relevant symptom tag
-    resultDiv.style.display = 'block';
+      <div style="color:var(--yellow);font-size:0.85rem;margin-top:4px;">${matched.msg}</div>`;
+    document.getElementById('deptText').textContent = matched.dept;
+    selectedSymptoms.clear();
     showToast(`Department identified: ${matched.dept}`, 'info');
   } else {
     resultText.innerHTML = `<div>⚠️ Could not identify specific department. <span style="color:var(--yellow);">Going to Emergency Medicine.</span></div>`;
-    resultDiv.style.display = 'block';
+    document.getElementById('deptText').textContent = 'Emergency Medicine';
   }
 }
 
-function detectLocation() {
+function proceed() {
+  showLoading('Getting your location...');
+  const dept = document.getElementById('deptText').textContent || 'Emergency Medicine';
+
   if (!navigator.geolocation) {
-    showToast('Geolocation not supported on this device');
+    hideLoading();
+    window.location.href = `/hospitals.html?department=${encodeURIComponent(dept)}&from=symptoms`;
     return;
   }
-  showLoading('Detecting your location...');
+
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       hideLoading();
-      userLat = pos.coords.latitude;
-      userLng = pos.coords.longitude;
-      document.getElementById('locationStatus').innerHTML = `
-        <div style="color:var(--green-alert);font-size:1.5rem;margin-bottom:6px;">✅</div>
-        <div style="font-family:var(--font-display);font-weight:600;margin-bottom:4px;">Location Detected</div>
-        <div style="color:var(--gray);font-size:0.8rem;">${userLat.toFixed(4)}, ${userLng.toFixed(4)}</div>
-      `;
-      showToast('Location detected successfully!', 'success');
-      checkFindReady();
+      const { latitude, longitude } = pos.coords;
+      window.location.href = `/hospitals.html?lat=${latitude}&lng=${longitude}&department=${encodeURIComponent(dept)}&from=symptoms`;
     },
-    (err) => {
+    () => {
       hideLoading();
-      showToast('Could not detect location. Please enter manually.');
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
+      window.location.href = `/hospitals.html?department=${encodeURIComponent(dept)}&from=symptoms`;
+    }
   );
-}
-
-function setManualLocation() {
-  const lat = parseFloat(document.getElementById('manualLat').value);
-  const lng = parseFloat(document.getElementById('manualLng').value);
-  if (isNaN(lat) || isNaN(lng)) {
-    showToast('Please enter valid latitude and longitude');
-    return;
-  }
-  userLat = lat;
-  userLng = lng;
-  document.getElementById('locationStatus').innerHTML = `
-    <div style="color:var(--green-alert);font-size:1.5rem;margin-bottom:6px;">📍</div>
-    <div style="font-family:var(--font-display);font-weight:600;margin-bottom:4px;">Location Set</div>
-    <div style="color:var(--gray);font-size:0.8rem;">${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
-  `;
-  showToast('Location set manually!', 'success');
-  checkFindReady();
-}
-
-function checkFindReady() {
-  const btn = document.getElementById('findBtn');
-  const hint = document.getElementById('findHint');
-  const hasSym = selectedSymptoms.length > 0;
-  const hasLoc = userLat !== null;
-
-  if (hasSym && hasLoc) {
-    btn.disabled = false;
-    btn.style.opacity = '1';
-    btn.style.cursor = 'pointer';
-    hint.textContent = `Ready! ${selectedSymptoms.length} symptom(s) selected`;
-    hint.style.color = 'var(--green-alert)';
-  } else if (hasSym && !hasLoc) {
-    hint.textContent = 'Now set your location';
-  } else if (!hasSym && hasLoc) {
-    hint.textContent = 'Now select a symptom';
-  } else {
-    hint.textContent = 'Select symptoms and location first';
-  }
-}
-
-function findHospitals() {
-  if (!userLat || !userLng) { showToast('Please set your location first'); return; }
-  const dept = getDept() || 'Emergency Medicine';
-  const params = new URLSearchParams({
-    lat: userLat,
-    lng: userLng,
-    department: dept,
-    from: 'symptoms'
-  });
-  window.location.href = `hospitals.html?${params.toString()}`;
 }

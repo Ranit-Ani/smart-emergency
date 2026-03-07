@@ -69,18 +69,26 @@
         <!-- Common Symptoms -->
         <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:600;margin-bottom:1rem;">⚡ Quick Select Symptoms</div>
         <div class="d-flex flex-wrap gap-2 mb-4" id="symptomTags">
-          <button class="symptom-tag" data-symptom="heart_attack" onclick="toggleSymptom(this)">❤️ Heart Attack</button>
-          <button class="symptom-tag" data-symptom="chest_pain" onclick="toggleSymptom(this)">💔 Chest Pain</button>
-          <button class="symptom-tag" data-symptom="accident" onclick="toggleSymptom(this)">🚗 Accident / Trauma</button>
-          <button class="symptom-tag" data-symptom="stroke" onclick="toggleSymptom(this)">🧠 Stroke</button>
-          <button class="symptom-tag" data-symptom="high_fever" onclick="toggleSymptom(this)">🤒 High Fever</button>
-          <button class="symptom-tag" data-symptom="breathing_problem" onclick="toggleSymptom(this)">😮‍💨 Breathing Problem</button>
-          <button class="symptom-tag" data-symptom="pregnancy_emergency" onclick="toggleSymptom(this)">🤱 Pregnancy Emergency</button>
-          <button class="symptom-tag" data-symptom="poisoning" onclick="toggleSymptom(this)">☠️ Poisoning</button>
-          <button class="symptom-tag" data-symptom="severe_bleeding" onclick="toggleSymptom(this)">🩸 Severe Bleeding</button>
-          <button class="symptom-tag" data-symptom="unconscious" onclick="toggleSymptom(this)">😵 Unconscious</button>
-          <button class="symptom-tag" data-symptom="bone_fracture" onclick="toggleSymptom(this)">🦴 Bone Fracture</button>
-          <button class="symptom-tag" data-symptom="burn" onclick="toggleSymptom(this)">🔥 Burns</button>
+          <button class="symptom-tag" data-symptom="heart_attack" onclick="toggleSymptom(this, 'heart_attack')">❤️ Heart Attack</button>
+          <button class="symptom-tag" data-symptom="chest_pain" onclick="toggleSymptom(this, 'chest_pain')">💔 Chest Pain</button>
+          <button class="symptom-tag" data-symptom="stroke" onclick="toggleSymptom(this, 'stroke')">🧠 Stroke</button>
+          <button class="symptom-tag" data-symptom="seizure" onclick="toggleSymptom(this, 'seizure')">⚡ Seizure / Fits</button>
+          <button class="symptom-tag" data-symptom="accident" onclick="toggleSymptom(this, 'accident')">🚗 Accident / Trauma</button>
+          <button class="symptom-tag" data-symptom="severe_bleeding" onclick="toggleSymptom(this, 'severe_bleeding')">🩸 Severe Bleeding</button>
+          <button class="symptom-tag" data-symptom="bone_fracture" onclick="toggleSymptom(this, 'bone_fracture')">🦴 Bone Fracture</button>
+          <button class="symptom-tag" data-symptom="high_fever" onclick="toggleSymptom(this, 'high_fever')">🤒 High Fever</button>
+          <button class="symptom-tag" data-symptom="vomiting" onclick="toggleSymptom(this, 'vomiting')">🤢 Vomiting / Diarrhea</button>
+          <button class="symptom-tag" data-symptom="breathing_problem" onclick="toggleSymptom(this, 'breathing_problem')">😮‍💨 Breathing Problem</button>
+          <button class="symptom-tag" data-symptom="pregnancy_emergency" onclick="toggleSymptom(this, 'pregnancy_emergency')">🤱 Pregnancy Emergency</button>
+          <button class="symptom-tag" data-symptom="poisoning" onclick="toggleSymptom(this, 'poisoning')">☠️ Poisoning</button>
+          <button class="symptom-tag" data-symptom="unconscious" onclick="toggleSymptom(this, 'unconscious')">😵 Unconscious</button>
+          <button class="symptom-tag" data-symptom="burn" onclick="toggleSymptom(this, 'burn')">🔥 Burns Injury</button>
+          <button class="symptom-tag" data-symptom="child_emergency" onclick="toggleSymptom(this, 'child_emergency')">👶 Child Emergency</button>
+          <button class="symptom-tag" data-symptom="eye_injury" onclick="toggleSymptom(this, 'eye_injury')">👁️ Eye Injury</button>
+          <button class="symptom-tag" data-symptom="mental_crisis" onclick="toggleSymptom(this, 'mental_crisis')">🧩 Mental Health Crisis</button>
+          <button class="symptom-tag" data-symptom="kidney_pain" onclick="toggleSymptom(this, 'kidney_pain')">💧 Kidney Problem</button>
+          <button class="symptom-tag" data-symptom="cancer_emergency" onclick="toggleSymptom(this, 'cancer_emergency')">🎗️ Cancer Emergency</button>
+          <button class="symptom-tag" data-symptom="ear_nose_throat" onclick="toggleSymptom(this, 'ear_nose_throat')">👂 Ear / Nose / Throat</button>
         </div>
 
         <!-- Selected -->

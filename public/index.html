@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Emergency – AI Emergency Help Platform</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23E63946'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='20'>🚑</text></svg>"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="css/style.css" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">
+      <div class="brand-icon">🚑</div>
+      Smart Emergency
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span style="color:white;font-size:1.3rem">☰</span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto gap-1">
+        <li class="nav-item"><a class="nav-link active" href="index.html">🏠 Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="symptoms.html">🩺 Symptoms</a></li>
+        <li class="nav-item"><a class="nav-link" href="hospitals.html">🏥 Hospitals</a></li>
+        <li class="nav-item"><a class="nav-link" href="map.html">🗺️ Map</a></li>
+        <li class="nav-item"><a class="nav-link" href="emergency-contacts.html">📞 Emergency</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero-section">
+  <div class="container">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-7">
+        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(230,57,70,0.12);border:1px solid rgba(230,57,70,0.25);padding:6px 16px;border-radius:20px;margin-bottom:1.5rem;">
+          <span class="pulse-dot"></span>
+          <span style="font-size:0.82rem;color:#E63946;font-family:var(--font-cond);letter-spacing:1px;font-weight:600">EMERGENCY PLATFORM ACTIVE</span>
+        </div>
+        <h1 style="font-family:var(--font-display);font-size:clamp(2.2rem,5vw,3.5rem);font-weight:700;line-height:1.1;margin-bottom:1.25rem;">
+          Find the Right Hospital<br><span class="title-accent">in Seconds.</span>
+        </h1>
+        <p style="color:var(--gray);font-size:1.05rem;max-width:520px;margin-bottom:2rem;line-height:1.75;">
+          Smart Emergency uses your location and symptoms to instantly locate the nearest hospital with the right department — so you can get help before it's too late.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="symptoms.html" class="btn-emergency" style="font-size:1.1rem;padding:16px 36px;">
+            🚨 Find Emergency Help
+          </a>
+          <a href="emergency-contacts.html" class="btn-cyan">
+            📞 Emergency Numbers
+          </a>
+        </div>
+        <div class="row g-3 mt-4">
+          <div class="col-4">
+            <div class="stat-box">
+              <div class="stat-num" id="hospitalCount">—</div>
+              <div class="stat-label">Hospitals</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="stat-box">
+              <div class="stat-num">&lt;30s</div>
+              <div class="stat-label">To Find Help</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="stat-box">
+              <div class="stat-num">24/7</div>
+              <div class="stat-label">Available</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5 d-none d-lg-block">
+        <div style="background:var(--navy-card);border:1px solid var(--border);border-radius:20px;padding:2rem;position:relative;">
+          <div style="position:absolute;top:-8px;left:24px;background:var(--red);color:#fff;font-family:var(--font-cond);font-size:0.75rem;letter-spacing:1px;padding:3px 12px;border-radius:20px;font-weight:700;">LIVE STATUS</div>
+          <div class="d-flex flex-column gap-3 mt-2">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(6,214,160,0.07);border:1px solid rgba(6,214,160,0.15);border-radius:10px;">
+              <span style="font-size:1.4rem">🏥</span>
+              <div>
+                <div style="font-family:var(--font-display);font-weight:600;font-size:0.95rem;">Apollo Gleneagles</div>
+                <div style="color:var(--gray);font-size:0.8rem;">0.8 km away · Emergency Open</div>
+              </div>
+              <span class="badge-available ms-auto"><span class="pulse-dot"></span> OPEN</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(6,214,160,0.07);border:1px solid rgba(6,214,160,0.15);border-radius:10px;">
+              <span style="font-size:1.4rem">🏥</span>
+              <div>
+                <div style="font-family:var(--font-display);font-weight:600;font-size:0.95rem;">SSKM Hospital</div>
+                <div style="color:var(--gray);font-size:0.8rem;">2.1 km away · Emergency Open</div>
+              </div>
+              <span class="badge-available ms-auto"><span class="pulse-dot"></span> OPEN</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,209,102,0.07);border:1px solid rgba(255,209,102,0.15);border-radius:10px;">
+              <span style="font-size:1.4rem">🏥</span>
+              <div>
+                <div style="font-family:var(--font-display);font-weight:600;font-size:0.95rem;">Fortis Hospital</div>
+                <div style="color:var(--gray);font-size:0.8rem;">3.5 km away · Limited</div>
+              </div>
+              <span class="badge-unavailable ms-auto">BUSY</span>
+            </div>
+          </div>
+          <div class="mt-3" style="text-align:center">
+            <span style="color:var(--gray);font-size:0.8rem;">📍 Showing hospitals near Kolkata</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Actions -->
+<section style="padding:3rem 0;background:var(--navy-mid);">
+  <div class="container">
+    <h2 class="section-title">Quick Actions</h2>
+    <p class="section-sub">Everything you need in one tap</p>
+    <div class="row g-3">
+      <div class="col-6 col-md-3">
+        <a href="symptoms.html" class="quick-action">
+          <span class="action-icon">🏥</span>
+          <div class="action-title">Find Hospital</div>
+          <div class="action-sub">Nearest emergency care</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="tel:108" class="quick-action">
+          <span class="action-icon">🚑</span>
+          <div class="action-title">Call Ambulance</div>
+          <div class="action-sub">Dial 108 instantly</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="map.html" class="quick-action">
+          <span class="action-icon">🗺️</span>
+          <div class="action-title">Map View</div>
+          <div class="action-sub">See hospitals on map</div>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="emergency-contacts.html" class="quick-action">
+          <span class="action-icon">📞</span>
+          <div class="action-title">Emergency Nos.</div>
+          <div class="action-sub">All emergency numbers</div>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section style="padding:3rem 0;">
+  <div class="container">
+    <h2 class="section-title">How It <span class="title-accent">Works</span></h2>
+    <p class="section-sub">Get to the right hospital in 4 simple steps</p>
+    <div class="row g-4">
+      <div class="col-md-3 col-6">
+        <div class="text-center">
+          <div style="width:64px;height:64px;background:rgba(230,57,70,0.12);border:1.5px solid rgba(230,57,70,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 1rem;">🩺</div>
+          <div style="font-family:var(--font-cond);font-size:0.7rem;color:var(--red);letter-spacing:2px;font-weight:700;margin-bottom:6px;">STEP 01</div>
+          <div style="font-family:var(--font-display);font-size:1.05rem;font-weight:600;">Select Symptoms</div>
+          <div style="color:var(--gray);font-size:0.85rem;margin-top:4px;">Choose from common emergencies or type manually</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="text-center">
+          <div style="width:64px;height:64px;background:rgba(0,180,216,0.12);border:1.5px solid rgba(0,180,216,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 1rem;">📍</div>
+          <div style="font-family:var(--font-cond);font-size:0.7rem;color:var(--cyan);letter-spacing:2px;font-weight:700;margin-bottom:6px;">STEP 02</div>
+          <div style="font-family:var(--font-display);font-size:1.05rem;font-weight:600;">Detect Location</div>
+          <div style="color:var(--gray);font-size:0.85rem;margin-top:4px;">Auto-detects your GPS location</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="text-center">
+          <div style="width:64px;height:64px;background:rgba(6,214,160,0.12);border:1.5px solid rgba(6,214,160,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 1rem;">🔍</div>
+          <div style="font-family:var(--font-cond);font-size:0.7rem;color:var(--green-alert);letter-spacing:2px;font-weight:700;margin-bottom:6px;">STEP 03</div>
+          <div style="font-family:var(--font-display);font-size:1.05rem;font-weight:600;">Find Hospitals</div>
+          <div style="color:var(--gray);font-size:0.85rem;margin-top:4px;">Sorted by distance with right department</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="text-center">
+          <div style="width:64px;height:64px;background:rgba(255,209,102,0.12);border:1.5px solid rgba(255,209,102,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 1rem;">🚀</div>
+          <div style="font-family:var(--font-cond);font-size:0.7rem;color:var(--yellow);letter-spacing:2px;font-weight:700;margin-bottom:6px;">STEP 04</div>
+          <div style="font-family:var(--font-display);font-size:1.05rem;font-weight:600;">Call or Navigate</div>
+          <div style="color:var(--gray);font-size:0.85rem;margin-top:4px;">One-click call or get directions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Emergency Banner -->
+<section style="padding:2.5rem 0;background:linear-gradient(135deg,rgba(230,57,70,0.12),rgba(230,57,70,0.05));border-top:1px solid rgba(230,57,70,0.15);border-bottom:1px solid rgba(230,57,70,0.15);">
+  <div class="container text-center">
+    <div style="font-family:var(--font-cond);font-size:0.8rem;letter-spacing:2px;color:var(--red);font-weight:700;margin-bottom:0.5rem;">⚡ IMMEDIATE EMERGENCY?</div>
+    <h3 style="font-family:var(--font-display);font-size:1.8rem;font-weight:700;margin-bottom:1rem;">Call National Ambulance Now</h3>
+    <a href="tel:108" class="btn-emergency" style="font-size:1.3rem;padding:18px 48px;border-radius:50px;">
+      📞 108 — Call Ambulance
+    </a>
+    <div style="margin-top:1rem;color:var(--gray);font-size:0.88rem;">
+      Also: <a href="tel:112" style="color:var(--cyan);text-decoration:none;">112 National Emergency</a> &nbsp;|&nbsp; 
+      <a href="tel:102" style="color:var(--cyan);text-decoration:none;">102 Medical</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="footer-brand mb-2">🚑 Smart Emergency</div>
+        <p>AI-assisted emergency help platform connecting you to the nearest hospital when every second counts.</p>
+      </div>
+      <div class="col-md-4">
+        <div style="font-family:var(--font-display);font-weight:600;margin-bottom:1rem;color:var(--white);">Quick Links</div>
+        <div class="d-flex flex-column gap-2">
+          <a href="symptoms.html">🩺 Find Hospital by Symptom</a>
+          <a href="hospitals.html">🏥 All Hospitals</a>
+          <a href="map.html">🗺️ Map View</a>
+          <a href="emergency-contacts.html">📞 Emergency Numbers</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div style="font-family:var(--font-display);font-weight:600;margin-bottom:1rem;color:var(--white);">Emergency Hotlines</div>
+        <div class="d-flex flex-column gap-2">
+          <a href="tel:108">🚑 108 – Ambulance</a>
+          <a href="tel:112">🆘 112 – National Emergency</a>
+          <a href="tel:102">🏥 102 – Medical Emergency</a>
+          <a href="tel:1098">👶 1098 – Child Emergency</a>
+        </div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div style="text-align:center;color:var(--gray);font-size:0.82rem;">
+      &copy; 2025 Smart Emergency. Built for BCA Portfolio. <a href="/admin/login.html">Admin</a>
+    </div>
+  </div>
+</footer>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/main.js"></script>
+<script>
+  // Load hospital count
+  fetch('/api/hospitals').then(r => r.json()).then(data => {
+    if (data.success) {
+      document.getElementById('hospitalCount').textContent = data.data.length + '+';
+    }
+  }).catch(() => {
+    document.getElementById('hospitalCount').textContent = '8+';
+  });
+</script>
+</body>
+</html>

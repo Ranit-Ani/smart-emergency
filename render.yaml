@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: smart-emergency
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: MONGODB_URI
+        sync: false        # You fill this in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true  # Render auto-generates a secure secret
+      - key: ADMIN_EMAIL
+        value: admin@smartemergency.com
+      - key: ADMIN_PASSWORD
+        sync: false        # You fill this in Render dashboard

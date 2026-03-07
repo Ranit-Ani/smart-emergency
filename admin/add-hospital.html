@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add Hospital – Smart Emergency Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="admin.css" rel="stylesheet"/>
+</head>
+<body>
+
+<div style="display:flex;">
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand"><span>🚑</span> SE Admin</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="hospitals.html">🏥 Hospitals</a>
+      <a href="add-hospital.html" class="active">➕ Add Hospital</a>
+      <a href="/" target="_blank">🌐 View Site</a>
+      <a href="#" onclick="logout()">🚪 Logout</a>
+    </nav>
+  </aside>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div style="font-family:var(--font-display);font-size:1.2rem;font-weight:700;" id="pageTitle">Add Hospital</div>
+      <div style="color:var(--gray);font-size:0.88rem;" id="adminEmail">—</div>
+    </header>
+
+    <div class="admin-content">
+      <div class="admin-card" style="max-width:700px;">
+        <div id="errorMsg" style="background:rgba(230,57,70,0.1);border:1px solid rgba(230,57,70,0.3);color:var(--red);padding:10px 14px;border-radius:8px;font-size:0.88rem;margin-bottom:1rem;display:none;"></div>
+        <div id="successMsg" style="background:rgba(6,214,160,0.1);border:1px solid rgba(6,214,160,0.3);color:var(--green-alert);padding:10px 14px;border-radius:8px;font-size:0.88rem;margin-bottom:1rem;display:none;"></div>
+
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="form-group">
+              <label class="form-label">Hospital Name *</label>
+              <input type="text" id="name" class="form-input" placeholder="e.g. Apollo Gleneagles Hospital"/>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <div class="form-group">
+              <label class="form-label">Address *</label>
+              <input type="text" id="address" class="form-input" placeholder="Full street address"/>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label class="form-label">City *</label>
+              <input type="text" id="city" class="form-input" placeholder="Kolkata"/>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label">Latitude *</label>
+              <input type="number" id="latitude" class="form-input" placeholder="22.5726" step="any"/>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label">Longitude *</label>
+              <input type="number" id="longitude" class="form-input" placeholder="88.3639" step="any"/>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label">Phone Number *</label>
+              <input type="text" id="phone" class="form-input" placeholder="+919876543210"/>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label">Rating (0–5)</label>
+              <input type="number" id="rating" class="form-input" placeholder="4.0" step="0.1" min="0" max="5"/>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="form-group">
+              <label class="form-label">Departments (select multiple)</label>
+              <div id="deptCheckboxes" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--white);font-size:0.9rem;"><input type="checkbox" value="Cardiology" style="accent-color:var(--red);"> Cardiology</label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--white);font-size:0.9rem;"><input type="checkbox" value="Neurology"> Neurology</label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--white);font-size:0.9rem;"><input type="checkbox" value="Trauma Center"> Trauma Center</label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--white);font-size:0.9rem;"><input type="checkbox" value="Gynecology"> Gynecology</label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--white);font-size:0.9rem;"><input type="checkbox" value="General Medicine"> General Medicine</label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--white);font-size:0.9rem;"><input type="checkbox" value="Emergency Medicine"> Emergency Medicine</label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--white);font-size:0.9rem;"><input type="checkbox" value="Pediatrics"> Pediatrics</label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--white);font-size:0.9rem;"><input type="checkbox" value="Orthopedics"> Orthopedics</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label">Emergency Services</label>
+              <select id="emergency_services" class="form-input">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label">Currently Available</label>
+              <select id="emergency_available" class="form-input">
+                <option value="true">Yes – Available</option>
+                <option value="false">No – Busy/Limited</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-12" style="margin-top:0.5rem;">
+            <button onclick="saveHospital()" id="saveBtn" class="btn-primary" style="padding:12px 36px;">
+              💾 Save Hospital
+            </button>
+            <a href="hospitals.html" class="btn-secondary" style="margin-left:12px;">Cancel</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  const token = localStorage.getItem('adminToken');
+  if (!token) window.location.href = '/admin/login.html';
+  document.getElementById('adminEmail').textContent = localStorage.getItem('adminEmail') || '';
+
+  function logout() { localStorage.clear(); window.location.href = '/admin/login.html'; }
+
+  function showToast(msg, type='error') {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div'); t.className=`toast-msg ${type}`; t.textContent=msg;
+    c.appendChild(t); setTimeout(()=>t.remove(), 3500);
+  }
+
+  // Check if editing
+  const urlParams = new URLSearchParams(window.location.search);
+  const editId = urlParams.get('edit');
+  let isEdit = false;
+
+  if (editId) {
+    isEdit = true;
+    document.getElementById('pageTitle').textContent = 'Edit Hospital';
+    document.getElementById('saveBtn').textContent = '💾 Update Hospital';
+    loadEditData(editId);
+  }
+
+  async function loadEditData(id) {
+    try {
+      const res = await fetch(`/api/hospitals/${id}`);
+      const data = await res.json();
+      if (!data.success) return;
+      const h = data.data;
+      document.getElementById('name').value = h.name || '';
+      document.getElementById('address').value = h.address || '';
+      document.getElementById('city').value = h.city || '';
+      document.getElementById('latitude').value = h.latitude || '';
+      document.getElementById('longitude').value = h.longitude || '';
+      document.getElementById('phone').value = h.phone || '';
+      document.getElementById('rating').value = h.rating || 4.0;
+      document.getElementById('emergency_services').value = h.emergency_services ? 'true' : 'false';
+      document.getElementById('emergency_available').value = h.emergency_available ? 'true' : 'false';
+      // Check departments
+      document.querySelectorAll('#deptCheckboxes input[type="checkbox"]').forEach(cb => {
+        cb.checked = (h.departments || []).includes(cb.value);
+      });
+    } catch (e) { showToast('Failed to load hospital data'); }
+  }
+
+  async function saveHospital() {
+    const name = document.getElementById('name').value.trim();
+    const address = document.getElementById('address').value.trim();
+    const city = document.getElementById('city').value.trim();
+    const latitude = parseFloat(document.getElementById('latitude').value);
+    const longitude = parseFloat(document.getElementById('longitude').value);
+    const phone = document.getElementById('phone').value.trim();
+    const rating = parseFloat(document.getElementById('rating').value) || 4.0;
+    const emergency_services = document.getElementById('emergency_services').value === 'true';
+    const emergency_available = document.getElementById('emergency_available').value === 'true';
+    const departments = [...document.querySelectorAll('#deptCheckboxes input:checked')].map(cb => cb.value);
+
+    const errEl = document.getElementById('errorMsg');
+    errEl.style.display = 'none';
+
+    if (!name || !address || !city || isNaN(latitude) || isNaN(longitude) || !phone) {
+      errEl.textContent = 'Please fill all required fields';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    const body = { name, address, city, latitude, longitude, phone, departments, emergency_services, emergency_available, rating };
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    try {
+      const url = isEdit ? `/api/hospitals/${editId}` : '/api/hospitals';
+      const method = isEdit ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        const successEl = document.getElementById('successMsg');
+        successEl.textContent = `Hospital ${isEdit ? 'updated' : 'added'} successfully!`;
+        successEl.style.display = 'block';
+        showToast(`Hospital ${isEdit ? 'updated' : 'added'}!`, 'success');
+        if (!isEdit) {
+          setTimeout(() => window.location.href = 'hospitals.html', 1500);
+        }
+      } else {
+        errEl.textContent = data.error || 'Failed to save hospital';
+        errEl.style.display = 'block';
+      }
+    } catch (e) {
+      errEl.textContent = 'Server error. Please try again.';
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = isEdit ? '💾 Update Hospital' : '💾 Save Hospital';
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manage Hospitals – Smart Emergency Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="admin.css" rel="stylesheet"/>
+</head>
+<body>
+
+<div style="display:flex;">
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand"><span>🚑</span> SE Admin</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="hospitals.html" class="active">🏥 Hospitals</a>
+      <a href="add-hospital.html">➕ Add Hospital</a>
+      <a href="/" target="_blank">🌐 View Site</a>
+      <a href="#" onclick="logout()">🚪 Logout</a>
+    </nav>
+  </aside>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div style="font-family:var(--font-display);font-size:1.2rem;font-weight:700;">Manage Hospitals</div>
+      <a href="add-hospital.html" class="btn-primary" style="font-size:0.9rem;padding:8px 18px;text-decoration:none;">+ Add Hospital</a>
+    </header>
+
+    <div class="admin-content">
+      <!-- Search/Filter bar -->
+      <div class="admin-card mb-3" style="padding:1rem;">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-5">
+            <input type="text" id="searchInput" class="form-input" placeholder="Search by name or city..." oninput="filterTable()"/>
+          </div>
+          <div class="col-md-3">
+            <select id="statusFilter" class="form-input" onchange="filterTable()">
+              <option value="">All Status</option>
+              <option value="open">Available</option>
+              <option value="busy">Busy</option>
+            </select>
+          </div>
+          <div class="col-md-4 text-end">
+            <span id="countText" style="color:var(--gray);font-size:0.88rem;"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div style="overflow-x:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>City</th>
+                <th>Phone</th>
+                <th>Departments</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="hospitalTableBody">
+              <tr><td colspan="7" style="text-align:center;color:var(--gray);padding:2rem;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  const token = localStorage.getItem('adminToken');
+  if (!token) window.location.href = '/admin/login.html';
+
+  let allHospitals = [];
+
+  function logout() { localStorage.clear(); window.location.href = '/admin/login.html'; }
+
+  function showToast(msg, type='error') {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div'); t.className=`toast-msg ${type}`; t.textContent=msg;
+    c.appendChild(t); setTimeout(()=>t.remove(), 3500);
+  }
+
+  async function loadHospitals() {
+    try {
+      const res = await fetch('/api/hospitals');
+      const data = await res.json();
+      if (data.success) {
+        allHospitals = data.data;
+        renderTable(allHospitals);
+      }
+    } catch (e) { showToast('Failed to load hospitals'); }
+  }
+
+  function renderTable(list) {
+    const tbody = document.getElementById('hospitalTableBody');
+    document.getElementById('countText').textContent = `${list.length} hospital${list.length!==1?'s':''}`;
+
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray);padding:2rem;">No hospitals found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = list.map((h, i) => `
+      <tr>
+        <td style="color:var(--gray);">${i+1}</td>
+        <td style="font-weight:600;min-width:160px;">${h.name}</td>
+        <td style="color:var(--gray);">${h.city}</td>
+        <td style="color:var(--cyan);">${h.phone}</td>
+        <td style="max-width:200px;">
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">
+            ${(h.departments||[]).slice(0,2).map(d=>`<span style="background:rgba(0,180,216,0.1);color:var(--cyan);border:1px solid rgba(0,180,216,0.2);padding:2px 8px;border-radius:10px;font-size:0.72rem;">${d}</span>`).join('')}
+            ${h.departments&&h.departments.length>2 ? `<span style="color:var(--gray);font-size:0.78rem;">+${h.departments.length-2}</span>` : ''}
+          </div>
+        </td>
+        <td>${h.emergency_available ? '<span class="badge-open">Open</span>' : '<span class="badge-busy">Busy</span>'}</td>
+        <td style="white-space:nowrap;">
+          <a href="add-hospital.html?edit=${h._id}" class="btn-edit" style="margin-right:6px;">✏️ Edit</a>
+          <button onclick="toggleAvailability('${h._id}', ${h.emergency_available})" class="btn-secondary" style="margin-right:6px;padding:5px 10px;font-size:0.8rem;">
+            ${h.emergency_available ? '🔴 Set Busy' : '🟢 Set Open'}
+          </button>
+          <button onclick="deleteHospital('${h._id}')" class="btn-danger">🗑️</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function filterTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+    const filtered = allHospitals.filter(h => {
+      const matchSearch = !search || h.name.toLowerCase().includes(search) || h.city.toLowerCase().includes(search);
+      const matchStatus = !status || (status === 'open' && h.emergency_available) || (status === 'busy' && !h.emergency_available);
+      return matchSearch && matchStatus;
+    });
+    renderTable(filtered);
+  }
+
+  async function toggleAvailability(id, current) {
+    try {
+      const res = await fetch(`/api/hospitals/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ emergency_available: !current })
+      });
+      const data = await res.json();
+      if (data.success) { showToast('Status updated!', 'success'); loadHospitals(); }
+      else showToast(data.error || 'Update failed');
+    } catch (e) { showToast('Error updating status'); }
+  }
+
+  async function deleteHospital(id) {
+    if (!confirm('Are you sure you want to delete this hospital?')) return;
+    try {
+      const res = await fetch(`/api/hospitals/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) { showToast('Hospital deleted!', 'success'); loadHospitals(); }
+      else showToast(data.error || 'Delete failed');
+    } catch (e) { showToast('Error deleting hospital'); }
+  }
+
+  loadHospitals();
+</script>
+</body>
+</html>

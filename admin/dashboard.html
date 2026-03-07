@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard – Smart Emergency Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="admin.css" rel="stylesheet"/>
+</head>
+<body>
+
+<div style="display:flex;">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span>🚑</span> SE Admin
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="active">📊 Dashboard</a>
+      <a href="hospitals.html">🏥 Hospitals</a>
+      <a href="add-hospital.html">➕ Add Hospital</a>
+      <a href="/" target="_blank">🌐 View Site</a>
+      <a href="#" onclick="logout()" style="margin-top:auto;border-top:1px solid var(--border);">🚪 Logout</a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div style="font-family:var(--font-display);font-size:1.2rem;font-weight:700;">Dashboard</div>
+      <div style="color:var(--gray);font-size:0.88rem;" id="adminEmail">—</div>
+    </header>
+
+    <div class="admin-content">
+      <!-- Stats -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+          <div class="stat-card">
+            <div class="num" id="totalHospitals">—</div>
+            <div style="color:var(--gray);font-size:0.85rem;margin-top:4px;">Total Hospitals</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="stat-card">
+            <div class="num" style="color:var(--green-alert);" id="availableHospitals">—</div>
+            <div style="color:var(--gray);font-size:0.85rem;margin-top:4px;">Available Now</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="stat-card">
+            <div class="num" style="color:var(--yellow);" id="busyHospitals">—</div>
+            <div style="color:var(--gray);font-size:0.85rem;margin-top:4px;">Busy / Limited</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="stat-card">
+            <div class="num" style="color:var(--cyan);">24/7</div>
+            <div style="color:var(--gray);font-size:0.85rem;margin-top:4px;">Platform Uptime</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Hospitals -->
+      <div class="admin-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+          <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;">Recent Hospitals</div>
+          <a href="add-hospital.html" class="btn-secondary">+ Add Hospital</a>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>City</th>
+                <th>Phone</th>
+                <th>Emergency</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="hospitalTableBody">
+              <tr><td colspan="5" style="text-align:center;color:var(--gray);padding:2rem;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  const token = localStorage.getItem('adminToken');
+  if (!token) window.location.href = '/admin/login.html';
+  document.getElementById('adminEmail').textContent = localStorage.getItem('adminEmail') || '';
+
+  function showToast(msg, type='error') {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast-msg ${type}`;
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  function logout() {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminEmail');
+    window.location.href = '/admin/login.html';
+  }
+
+  async function loadDashboard() {
+    try {
+      const res = await fetch('/api/hospitals');
+      const data = await res.json();
+      if (!data.success) return;
+      const hospitals = data.data;
+      document.getElementById('totalHospitals').textContent = hospitals.length;
+      document.getElementById('availableHospitals').textContent = hospitals.filter(h => h.emergency_available).length;
+      document.getElementById('busyHospitals').textContent = hospitals.filter(h => !h.emergency_available).length;
+
+      const tbody = document.getElementById('hospitalTableBody');
+      tbody.innerHTML = hospitals.slice(0, 8).map(h => `
+        <tr>
+          <td style="font-weight:600;">${h.name}</td>
+          <td style="color:var(--gray);">${h.city}</td>
+          <td style="color:var(--cyan);">${h.phone}</td>
+          <td>${h.emergency_available ? '<span class="badge-open">Open</span>' : '<span class="badge-busy">Busy</span>'}</td>
+          <td>
+            <a href="add-hospital.html?edit=${h._id}" class="btn-edit" style="margin-right:6px;">Edit</a>
+            <button onclick="deleteHospital('${h._id}')" class="btn-danger">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      showToast('Failed to load dashboard data');
+    }
+  }
+
+  async function deleteHospital(id) {
+    if (!confirm('Delete this hospital?')) return;
+    try {
+      const res = await fetch(`/api/hospitals/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) { showToast('Hospital deleted', 'success'); loadDashboard(); }
+      else showToast(data.error || 'Delete failed');
+    } catch (e) { showToast('Error deleting hospital'); }
+  }
+
+  loadDashboard();
+</script>
+</body>
+</html>

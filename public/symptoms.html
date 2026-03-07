@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Select Symptoms – Smart Emergency</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23E63946'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='20'>🚑</text></svg>"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="css/style.css" rel="stylesheet"/>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="index.html"><div class="brand-icon">🚑</div>Smart Emergency</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span style="color:white;font-size:1.3rem">☰</span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto gap-1">
+        <li class="nav-item"><a class="nav-link" href="index.html">🏠 Home</a></li>
+        <li class="nav-item"><a class="nav-link active" href="symptoms.html">🩺 Symptoms</a></li>
+        <li class="nav-item"><a class="nav-link" href="hospitals.html">🏥 Hospitals</a></li>
+        <li class="nav-item"><a class="nav-link" href="map.html">🗺️ Map</a></li>
+        <li class="nav-item"><a class="nav-link" href="emergency-contacts.html">📞 Emergency</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="loading-overlay" id="loadingOverlay" style="display:none;">
+  <div class="spinner-ring"></div>
+  <p style="color:var(--gray);margin-top:16px;font-family:var(--font-body);">Detecting your location...</p>
+</div>
+
+<section class="hero-section" style="padding:2.5rem 0 2rem;">
+  <div class="container">
+    <div style="font-family:var(--font-cond);font-size:0.75rem;letter-spacing:2px;color:var(--red);font-weight:700;margin-bottom:0.5rem;">STEP 1 OF 2</div>
+    <h1 class="section-title">What's the <span class="title-accent">Emergency?</span></h1>
+    <p class="section-sub">Select symptoms or describe the situation — we'll find the right hospital department</p>
+  </div>
+</section>
+
+<section style="padding:2rem 0 4rem;">
+  <div class="container">
+    <div class="row g-4">
+
+      <!-- Left: Symptom Selection -->
+      <div class="col-lg-8">
+
+        <!-- Manual Input -->
+        <div class="card-emergency mb-4" style="border-left-color:var(--cyan);">
+          <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:600;margin-bottom:1rem;">🔍 Describe the Situation</div>
+          <div class="d-flex gap-2">
+            <input type="text" id="manualInput" class="form-control-emergency flex-grow-1"
+              placeholder="e.g. chest pain and breathing problem..." />
+            <button onclick="analyzeManual()" class="btn-emergency" style="padding:12px 24px;border-radius:10px;font-size:0.95rem;">
+              Analyze
+            </button>
+          </div>
+          <div id="aiResult" style="margin-top:12px;display:none;">
+            <div style="background:rgba(0,180,216,0.08);border:1px solid rgba(0,180,216,0.2);border-radius:10px;padding:12px 16px;">
+              <div style="font-family:var(--font-cond);font-size:0.75rem;letter-spacing:1px;color:var(--cyan);margin-bottom:4px;">AI ANALYSIS</div>
+              <div id="aiResultText" style="color:var(--white);font-size:0.95rem;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Common Symptoms -->
+        <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:600;margin-bottom:1rem;">⚡ Quick Select Symptoms</div>
+        <div class="d-flex flex-wrap gap-2 mb-4" id="symptomTags">
+          <button class="symptom-tag" data-symptom="heart_attack" onclick="toggleSymptom(this)">❤️ Heart Attack</button>
+          <button class="symptom-tag" data-symptom="chest_pain" onclick="toggleSymptom(this)">💔 Chest Pain</button>
+          <button class="symptom-tag" data-symptom="accident" onclick="toggleSymptom(this)">🚗 Accident / Trauma</button>
+          <button class="symptom-tag" data-symptom="stroke" onclick="toggleSymptom(this)">🧠 Stroke</button>
+          <button class="symptom-tag" data-symptom="high_fever" onclick="toggleSymptom(this)">🤒 High Fever</button>
+          <button class="symptom-tag" data-symptom="breathing_problem" onclick="toggleSymptom(this)">😮‍💨 Breathing Problem</button>
+          <button class="symptom-tag" data-symptom="pregnancy_emergency" onclick="toggleSymptom(this)">🤱 Pregnancy Emergency</button>
+          <button class="symptom-tag" data-symptom="poisoning" onclick="toggleSymptom(this)">☠️ Poisoning</button>
+          <button class="symptom-tag" data-symptom="severe_bleeding" onclick="toggleSymptom(this)">🩸 Severe Bleeding</button>
+          <button class="symptom-tag" data-symptom="unconscious" onclick="toggleSymptom(this)">😵 Unconscious</button>
+          <button class="symptom-tag" data-symptom="bone_fracture" onclick="toggleSymptom(this)">🦴 Bone Fracture</button>
+          <button class="symptom-tag" data-symptom="burn" onclick="toggleSymptom(this)">🔥 Burns</button>
+        </div>
+
+        <!-- Selected -->
+        <div id="selectedSection" style="display:none;">
+          <div class="divider"></div>
+          <div style="font-family:var(--font-display);font-size:1rem;font-weight:600;margin-bottom:0.75rem;">Selected Symptoms</div>
+          <div id="selectedTags" class="d-flex flex-wrap gap-2 mb-3"></div>
+          <div style="background:rgba(6,214,160,0.08);border:1px solid rgba(6,214,160,0.2);border-radius:10px;padding:14px 16px;margin-bottom:1.5rem;">
+            <div style="font-family:var(--font-cond);font-size:0.75rem;letter-spacing:1px;color:var(--green-alert);margin-bottom:4px;">RECOMMENDED DEPARTMENT</div>
+            <div id="deptText" style="font-family:var(--font-display);font-size:1.2rem;font-weight:700;color:var(--white);">—</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: Location & Action -->
+      <div class="col-lg-4">
+        <div class="card-emergency" style="border-left-color:var(--cyan);position:sticky;top:90px;">
+          <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:600;margin-bottom:1.25rem;">📍 Your Location</div>
+
+          <div id="locationStatus" style="background:var(--navy-light);border-radius:10px;padding:14px;margin-bottom:1rem;text-align:center;">
+            <div style="font-size:2rem;margin-bottom:8px;">📡</div>
+            <div style="color:var(--gray);font-size:0.88rem;">Click below to detect location</div>
+          </div>
+
+          <button onclick="detectLocation()" class="btn-cyan w-100 mb-3" style="justify-content:center;">
+            📍 Auto-Detect Location
+          </button>
+
+          <div style="color:var(--gray);font-size:0.82rem;text-align:center;margin-bottom:1rem;">— OR enter manually —</div>
+
+          <input type="text" id="manualLat" class="form-control-emergency mb-2" placeholder="Latitude (e.g. 22.5726)"/>
+          <input type="text" id="manualLng" class="form-control-emergency mb-3" placeholder="Longitude (e.g. 88.3639)"/>
+          <button onclick="setManualLocation()" class="btn-cyan w-100 mb-4" style="justify-content:center;">Set Location</button>
+
+          <div class="divider" style="margin:1rem 0;"></div>
+
+          <button onclick="findHospitals()" id="findBtn" class="btn-emergency w-100" style="justify-content:center;font-size:1rem;opacity:0.5;cursor:not-allowed;" disabled>
+            🔍 Find Nearest Hospitals
+          </button>
+          <div style="color:var(--gray);font-size:0.78rem;text-align:center;margin-top:8px;" id="findHint">
+            Select symptoms and location first
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container text-center">
+    <p style="color:var(--gray);font-size:0.88rem;">&copy; 2025 Smart Emergency &nbsp;|&nbsp; <a href="tel:108" style="color:var(--red);">🚑 108 Ambulance</a></p>
+  </div>
+</footer>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/main.js"></script>
+<script src="js/symptoms.js"></script>
+</body>
+</html>

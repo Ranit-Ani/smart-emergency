@@ -8,172 +8,286 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { error: 'Too many requests, please try again later.' }
-});
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100, message: { error: 'Too many requests.' } });
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/api/', limiter);
-
-// Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
-// MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smart-emergency')
-  .then(() => {
-    console.log('✅ MongoDB Connected');
-    seedAdminAndHospitals();
-  })
+  .then(() => { console.log('✅ MongoDB Connected'); seedData(); })
   .catch(err => console.error('❌ MongoDB Error:', err));
 
-// Routes
 const hospitalRoutes = require('./routes/hospitals');
 const adminRoutes = require('./routes/admin');
-
 app.use('/api/hospitals', hospitalRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Serve admin login page
-app.get('/admin/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin', 'login.html'));
-});
+app.get('/admin/login', (req, res) => res.sendFile(path.join(__dirname, 'admin', 'login.html')));
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-// Fallback to index
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Seed default admin and sample hospitals
-async function seedAdminAndHospitals() {
+async function seedData() {
   const Admin = require('./models/Admin');
   const Hospital = require('./models/Hospital');
   const bcrypt = require('bcryptjs');
-
   try {
-    const adminCount = await Admin.countDocuments();
-    if (adminCount === 0) {
+    if ((await Admin.countDocuments()) === 0) {
       const hashed = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Admin@123', 10);
-      await Admin.create({
-        email: process.env.ADMIN_EMAIL || 'admin@smartemergency.com',
-        password: hashed
-      });
-      console.log('✅ Default admin created');
+      await Admin.create({ email: process.env.ADMIN_EMAIL || 'admin@smartemergency.com', password: hashed });
+      console.log('✅ Admin created');
     }
-
-    const hospitalCount = await Hospital.countDocuments();
-    if (hospitalCount === 0) {
-      const sampleHospitals = [
-        {
-          name: "Apollo Gleneagles Hospital",
-          address: "58, Canal Circular Road, Kadapara, Phool Bagan",
-          city: "Kolkata",
-          latitude: 22.5726,
-          longitude: 88.3939,
-          phone: "+913323201000",
-          departments: ["Cardiology", "Neurology", "Trauma Center", "Emergency Medicine", "General Medicine"],
-          emergency_services: true,
-          emergency_available: true,
-          rating: 4.5
-        },
-        {
-          name: "SSKM Hospital",
-          address: "244, AJC Bose Road",
-          city: "Kolkata",
-          latitude: 22.5355,
-          longitude: 88.3443,
-          phone: "+912222041368",
-          departments: ["Cardiology", "Neurology", "Trauma Center", "Gynecology", "General Medicine", "Emergency Medicine"],
-          emergency_services: true,
-          emergency_available: true,
-          rating: 4.2
-        },
-        {
-          name: "Fortis Hospital",
-          address: "730, Anandapur, EM Bypass",
-          city: "Kolkata",
-          latitude: 22.5178,
-          longitude: 88.3986,
-          phone: "+913366284444",
-          departments: ["Cardiology", "Neurology", "Trauma Center", "Gynecology", "General Medicine"],
-          emergency_services: true,
-          emergency_available: false,
-          rating: 4.3
-        },
-        {
-          name: "Medica Superspecialty Hospital",
-          address: "127, Mukundapur, E.M. Bypass",
-          city: "Kolkata",
-          latitude: 22.5027,
-          longitude: 88.3940,
-          phone: "+913340400400",
-          departments: ["Cardiology", "Neurology", "Emergency Medicine", "General Medicine"],
-          emergency_services: true,
-          emergency_available: true,
-          rating: 4.1
-        },
-        {
-          name: "Bellevue Clinic",
-          address: "9, U N Brahmachari Street",
-          city: "Kolkata",
-          latitude: 22.5564,
-          longitude: 88.3600,
-          phone: "+913322872321",
-          departments: ["General Medicine", "Gynecology", "Emergency Medicine"],
-          emergency_services: true,
-          emergency_available: true,
-          rating: 3.9
-        },
-        {
-          name: "RG Kar Medical College",
-          address: "1, Khudiram Bose Sarani",
-          city: "Kolkata",
-          latitude: 22.5961,
-          longitude: 88.3715,
-          phone: "+912225565600",
-          departments: ["Cardiology", "Trauma Center", "Emergency Medicine", "General Medicine", "Neurology"],
-          emergency_services: true,
-          emergency_available: true,
-          rating: 4.0
-        },
-        {
-          name: "Woodlands Multispeciality Hospital",
-          address: "8/5, Alipore Road",
-          city: "Kolkata",
-          latitude: 22.5349,
-          longitude: 88.3316,
-          phone: "+913340901000",
-          departments: ["Cardiology", "Neurology", "Gynecology", "General Medicine"],
-          emergency_services: true,
-          emergency_available: false,
-          rating: 4.4
-        },
-        {
-          name: "Peerless Hospital",
-          address: "360, Pancha Sayar Road, Kolkata",
-          city: "Kolkata",
-          latitude: 22.4797,
-          longitude: 88.3940,
-          phone: "+913324612235",
-          departments: ["Cardiology", "Emergency Medicine", "Trauma Center", "General Medicine"],
-          emergency_services: true,
-          emergency_available: true,
-          rating: 4.2
-        }
-      ];
-      await Hospital.insertMany(sampleHospitals);
-      console.log('✅ Sample hospitals seeded');
+    if ((await Hospital.countDocuments()) === 0) {
+      await Hospital.insertMany(ALL_HOSPITALS);
+      console.log(`✅ ${ALL_HOSPITALS.length} hospitals seeded`);
     }
-  } catch (err) {
-    console.error('Seed error:', err);
-  }
+  } catch (err) { console.error('Seed error:', err); }
 }
+
+const ALL_HOSPITALS = [
+  // ═══════════════ KOLKATA — Government ═══════════════
+  { name:"SSKM Hospital (PG Hospital)", address:"244, AJC Bose Road", city:"Kolkata", latitude:22.5355, longitude:88.3443, phone:"+913222041368", departments:["Cardiology","Neurology","Trauma Center","Gynecology","General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:4.2 },
+  { name:"Calcutta Medical College & Hospital", address:"88, College Street", city:"Kolkata", latitude:22.5744, longitude:88.3629, phone:"+913222051468", departments:["Cardiology","Neurology","Trauma Center","General Medicine","Gynecology","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:4.0 },
+  { name:"RG Kar Medical College & Hospital", address:"1, Khudiram Bose Sarani, Shyambazar", city:"Kolkata", latitude:22.5961, longitude:88.3715, phone:"+913325565600", departments:["Cardiology","Neurology","Trauma Center","Emergency Medicine","General Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:4.0 },
+  { name:"Nil Ratan Sircar Medical College (NRS)", address:"138, AJC Bose Road, Sealdah", city:"Kolkata", latitude:22.5612, longitude:88.3651, phone:"+913322651190", departments:["Cardiology","Neurology","Trauma Center","Gynecology","General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.9 },
+  { name:"Sambhunath Pandit Hospital", address:"11, Shambhu Nath Pandit Street, Bhowanipore", city:"Kolkata", latitude:22.5274, longitude:88.3451, phone:"+913322230500", departments:["General Medicine","Gynecology","Emergency Medicine","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.8 },
+  { name:"Bangur Hospital", address:"Shyambazar, North Kolkata", city:"Kolkata", latitude:22.5990, longitude:88.3730, phone:"+913325551301", departments:["General Medicine","Emergency Medicine","Gynecology","Neurology"], emergency_services:true, emergency_available:true, rating:3.7 },
+  { name:"Calcutta National Medical College", address:"24, Gorachand Road, Beniapukur", city:"Kolkata", latitude:22.5529, longitude:88.3751, phone:"+913322441111", departments:["General Medicine","Trauma Center","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.8 },
+  { name:"Chittaranjan National Cancer Institute", address:"37, S P Mukherjee Road", city:"Kolkata", latitude:22.5270, longitude:88.3520, phone:"+913322260280", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:4.1 },
+  { name:"Vidyasagar Hospital", address:"Sarat Bose Road, Bhowanipore", city:"Kolkata", latitude:22.5290, longitude:88.3480, phone:"+913322867040", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.7 },
+  { name:"Institute of Neurosciences Kolkata", address:"185/1, AJC Bose Road", city:"Kolkata", latitude:22.5340, longitude:88.3610, phone:"+913340080000", departments:["Neurology","Emergency Medicine","General Medicine"], emergency_services:true, emergency_available:true, rating:4.2 },
+  { name:"Charnock Hospital Newtown", address:"Action Area II, Newtown", city:"Kolkata", latitude:22.5805, longitude:88.4685, phone:"+913366290000", departments:["Emergency Medicine","Trauma Center","General Medicine","Cardiology"], emergency_services:true, emergency_available:true, rating:3.9 },
+  // KOLKATA — Private
+  { name:"Apollo Gleneagles Hospital", address:"58, Canal Circular Road, Phool Bagan", city:"Kolkata", latitude:22.5726, longitude:88.3939, phone:"+913323201000", departments:["Cardiology","Neurology","Trauma Center","Emergency Medicine","General Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:4.5 },
+  { name:"Fortis Hospital Kolkata", address:"730, Anandapur, EM Bypass", city:"Kolkata", latitude:22.5178, longitude:88.3986, phone:"+913366284444", departments:["Cardiology","Neurology","Trauma Center","Gynecology","General Medicine"], emergency_services:true, emergency_available:false, rating:4.3 },
+  { name:"Medica Superspecialty Hospital", address:"127, Mukundapur, E.M. Bypass", city:"Kolkata", latitude:22.5027, longitude:88.3940, phone:"+913340400400", departments:["Cardiology","Neurology","Emergency Medicine","General Medicine"], emergency_services:true, emergency_available:true, rating:4.1 },
+  { name:"Bellevue Clinic", address:"9, U N Brahmachari Street, Park Street", city:"Kolkata", latitude:22.5564, longitude:88.3600, phone:"+913322872321", departments:["General Medicine","Gynecology","Emergency Medicine","Cardiology"], emergency_services:true, emergency_available:true, rating:3.9 },
+  { name:"Woodlands Multispeciality Hospital", address:"8/5, Alipore Road", city:"Kolkata", latitude:22.5349, longitude:88.3316, phone:"+913340901000", departments:["Cardiology","Neurology","Gynecology","General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:false, rating:4.4 },
+  { name:"Peerless Hospital", address:"360, Pancha Sayar Road", city:"Kolkata", latitude:22.4797, longitude:88.3940, phone:"+913324612235", departments:["Cardiology","Emergency Medicine","Trauma Center","General Medicine"], emergency_services:true, emergency_available:true, rating:4.2 },
+  { name:"AMRI Hospital Dhakuria", address:"JC-16 & 17, Sector III, Salt Lake", city:"Kolkata", latitude:22.5697, longitude:88.4246, phone:"+913366800000", departments:["Cardiology","Neurology","Trauma Center","Gynecology","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:4.3 },
+  { name:"Ruby General Hospital", address:"576, Anandapur, EM Bypass", city:"Kolkata", latitude:22.5231, longitude:88.3962, phone:"+913323553000", departments:["Cardiology","Neurology","Emergency Medicine","Gynecology","General Medicine"], emergency_services:true, emergency_available:true, rating:4.0 },
+  { name:"CMRI Hospital", address:"7/2, Diamond Harbour Road, Ekbalpore", city:"Kolkata", latitude:22.5397, longitude:88.3261, phone:"+913322265000", departments:["Cardiology","Neurology","General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:4.1 },
+  { name:"Columbia Asia Hospital", address:"15B, Nabapally, Barasat Road", city:"Kolkata", latitude:22.6185, longitude:88.4310, phone:"+913366523000", departments:["Cardiology","Neurology","General Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:4.1 },
+  { name:"Desun Hospital", address:"Anandapur, EM Bypass", city:"Kolkata", latitude:22.5150, longitude:88.3970, phone:"+913340403030", departments:["Cardiology","Emergency Medicine","General Medicine","Trauma Center"], emergency_services:true, emergency_available:false, rating:3.8 },
+  { name:"Ramakrishna Mission Seva Pratishthan", address:"99, Sarat Bose Road", city:"Kolkata", latitude:22.5268, longitude:88.3494, phone:"+913322861366", departments:["General Medicine","Emergency Medicine","Cardiology","Neurology"], emergency_services:true, emergency_available:true, rating:4.3 },
+  { name:"B.M. Birla Heart Research Centre", address:"1/1, National Library Avenue, Alipore", city:"Kolkata", latitude:22.5291, longitude:88.3338, phone:"+913322803552", departments:["Cardiology","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:4.3 },
+  { name:"Kothari Medical Centre", address:"8/3, Alipore Road", city:"Kolkata", latitude:22.5351, longitude:88.3300, phone:"+913323230008", departments:["Cardiology","Neurology","General Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:4.0 },
+  { name:"Park Clinic", address:"4, Gorky Terrace, Elgin Road", city:"Kolkata", latitude:22.5370, longitude:88.3560, phone:"+913322853476", departments:["Cardiology","General Medicine","Gynecology","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:4.0 },
+
+  // ═══════════════ HOWRAH ═══════════════
+  { name:"Narayana Superspeciality Hospital Howrah", address:"120/1, Andul Road, Howrah", city:"Howrah", latitude:22.5877, longitude:88.2832, phone:"+913326344444", departments:["Cardiology","Neurology","Trauma Center","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:4.4 },
+  { name:"Howrah District Hospital", address:"Hospital Road, Howrah", city:"Howrah", latitude:22.5913, longitude:88.3009, phone:"+913326381790", departments:["General Medicine","Trauma Center","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.7 },
+  { name:"Howrah Sadar Hospital", address:"Howrah Sadar, Howrah", city:"Howrah", latitude:22.5958, longitude:88.3012, phone:"+913326382200", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Ramakrishna Mission Hospital Howrah", address:"Howrah, West Bengal", city:"Howrah", latitude:22.5848, longitude:88.2977, phone:"+913326384255", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:4.1 },
+  { name:"Uluberia Sub-Divisional Hospital", address:"Uluberia, Howrah", city:"Uluberia", latitude:22.4706, longitude:88.1082, phone:"+913226452500", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Lilavati Hospital Howrah", address:"NH-6, Domjur, Howrah", city:"Howrah", latitude:22.5531, longitude:88.2456, phone:"+913326653030", departments:["Cardiology","General Medicine","Emergency Medicine","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.8 },
+  { name:"Bagnan Rural Hospital", address:"Bagnan, Howrah", city:"Bagnan", latitude:22.4636, longitude:87.9574, phone:"+913226455200", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Amta Sub-Divisional Hospital", address:"Amta, Howrah", city:"Amta", latitude:22.5880, longitude:87.9710, phone:"+913226460100", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Shyampur Rural Hospital", address:"Shyampur, Howrah", city:"Shyampur", latitude:22.5240, longitude:88.0460, phone:"+913226468300", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+
+  // ═══════════════ HOOGHLY ═══════════════
+  { name:"Imambara District Hospital Chinsurah", address:"Imambara, Chinsurah, Hooghly", city:"Chinsurah", latitude:22.8978, longitude:88.3913, phone:"+913212267310", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.7 },
+  { name:"Serampore Sub-Divisional Hospital", address:"Serampore, Hooghly", city:"Serampore", latitude:22.7500, longitude:88.3410, phone:"+913326520230", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:false, rating:3.5 },
+  { name:"Arambagh Sub-Divisional Hospital", address:"Arambagh, Hooghly", city:"Arambagh", latitude:22.8828, longitude:87.7857, phone:"+913213255055", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Chandannagar Sub-Divisional Hospital", address:"Chandannagar, Hooghly", city:"Chandannagar", latitude:22.8695, longitude:88.3689, phone:"+913326821130", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.6 },
+  { name:"Bandel State General Hospital", address:"Bandel, Hooghly", city:"Bandel", latitude:22.9309, longitude:88.3826, phone:"+913212252100", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Dankuni Hospital", address:"Dankuni, Hooghly", city:"Dankuni", latitude:22.6824, longitude:88.2843, phone:"+913326710200", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Uttarpara State General Hospital", address:"Uttarpara, Hooghly", city:"Uttarpara", latitude:22.6660, longitude:88.3500, phone:"+913326559800", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Tarakeswar Rural Hospital", address:"Tarakeswar, Hooghly", city:"Tarakeswar", latitude:22.8862, longitude:88.0142, phone:"+913213256100", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Goghat Rural Hospital", address:"Goghat, Hooghly", city:"Goghat", latitude:22.7780, longitude:87.8470, phone:"+913213262400", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Hooghly Nursing Home", address:"GT Road, Chinsurah", city:"Chinsurah", latitude:22.8990, longitude:88.3920, phone:"+913212265500", departments:["Cardiology","General Medicine","Gynecology","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.7 },
+
+  // ═══════════════ NORTH 24 PARGANAS ═══════════════
+  { name:"Barasat District Hospital", address:"Barasat, North 24 Parganas", city:"Barasat", latitude:22.7200, longitude:88.4792, phone:"+913325841507", departments:["General Medicine","Trauma Center","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.6 },
+  { name:"Barrackpore Sub-Divisional Hospital", address:"Barrackpore, North 24 Parganas", city:"Barrackpore", latitude:22.7604, longitude:88.3831, phone:"+913325921350", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Bongaon Sub-Divisional Hospital", address:"Bongaon, North 24 Parganas", city:"Bongaon", latitude:23.0500, longitude:88.8200, phone:"+913215256042", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Basirhat Sub-Divisional Hospital", address:"Basirhat, North 24 Parganas", city:"Basirhat", latitude:22.6575, longitude:88.8883, phone:"+913217255023", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Habra State General Hospital", address:"Habra, North 24 Parganas", city:"Habra", latitude:22.8366, longitude:88.6527, phone:"+913213252800", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Ashokenagar State General Hospital", address:"Ashokenagar, North 24 Parganas", city:"Ashokenagar", latitude:22.8602, longitude:88.5870, phone:"+913216250100", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Narayana Hospital Barasat", address:"Jheel Road, Barasat", city:"Barasat", latitude:22.7250, longitude:88.4820, phone:"+913325843030", departments:["Cardiology","Emergency Medicine","General Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:4.0 },
+  { name:"Madhyamgram Community Hospital", address:"Madhyamgram, North 24 Parganas", city:"Madhyamgram", latitude:22.6998, longitude:88.4520, phone:"+913325241500", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Barrackpore Cantonment Hospital", address:"Barrackpore Cantonment", city:"Barrackpore", latitude:22.7550, longitude:88.3810, phone:"+913325930200", departments:["General Medicine","Emergency Medicine","Trauma Center","Gynecology"], emergency_services:true, emergency_available:true, rating:3.6 },
+  { name:"Sodepur State General Hospital", address:"Sodepur, North 24 Parganas", city:"Sodepur", latitude:22.6890, longitude:88.3940, phone:"+913325285900", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Gaighata Rural Hospital", address:"Gaighata, North 24 Parganas", city:"Gaighata", latitude:22.9430, longitude:88.7250, phone:"+913216252500", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+
+  // ═══════════════ SOUTH 24 PARGANAS ═══════════════
+  { name:"Diamond Harbour District Hospital", address:"Diamond Harbour, South 24 Parganas", city:"Diamond Harbour", latitude:22.1919, longitude:88.1882, phone:"+913174255252", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.6 },
+  { name:"Kakdwip Sub-Divisional Hospital", address:"Kakdwip, South 24 Parganas", city:"Kakdwip", latitude:21.8786, longitude:88.1752, phone:"+913210255022", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Baruipur Sub-Divisional Hospital", address:"Baruipur, South 24 Parganas", city:"Baruipur", latitude:22.3567, longitude:88.4299, phone:"+913200255430", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Canning Sub-Divisional Hospital", address:"Canning, South 24 Parganas", city:"Canning", latitude:22.3082, longitude:88.6649, phone:"+913218255200", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Budge Budge State General Hospital", address:"Budge Budge, South 24 Parganas", city:"Budge Budge", latitude:22.4707, longitude:88.1728, phone:"+913326292900", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Sonarpur State General Hospital", address:"Sonarpur, South 24 Parganas", city:"Sonarpur", latitude:22.4312, longitude:88.4088, phone:"+913200277000", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Namkhana Rural Hospital", address:"Namkhana, South 24 Parganas", city:"Namkhana", latitude:21.7622, longitude:88.2000, phone:"+913210250080", departments:["General Medicine","Gynecology","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Joynagar Sub-Divisional Hospital", address:"Joynagar, South 24 Parganas", city:"Joynagar", latitude:22.1748, longitude:88.4328, phone:"+913218261300", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Thakurpukur ESI Hospital", address:"Thakurpukur, Kolkata", city:"Kolkata", latitude:22.4640, longitude:88.3080, phone:"+913324874400", departments:["General Medicine","Emergency Medicine","Gynecology","Cardiology"], emergency_services:true, emergency_available:true, rating:3.6 },
+  { name:"Mathurapur Rural Hospital", address:"Mathurapur, South 24 Parganas", city:"Mathurapur", latitude:22.1080, longitude:88.3720, phone:"+913218268500", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.2 },
+
+  // ═══════════════ NADIA ═══════════════
+  { name:"Kalyani JNM Hospital", address:"Kalyani, Nadia", city:"Kalyani", latitude:22.9742, longitude:88.4342, phone:"+913325882000", departments:["Cardiology","Neurology","Emergency Medicine","General Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.9 },
+  { name:"Kalyani Medical College & Hospital", address:"Kalyani, Nadia", city:"Kalyani", latitude:22.9680, longitude:88.4398, phone:"+913325880001", departments:["Cardiology","Neurology","Trauma Center","Emergency Medicine","General Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.9 },
+  { name:"Krishnanagar District Hospital", address:"Krishnanagar, Nadia", city:"Krishnanagar", latitude:23.3990, longitude:88.5038, phone:"+913472251201", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.6 },
+  { name:"Ranaghat Sub-Divisional Hospital", address:"Ranaghat, Nadia", city:"Ranaghat", latitude:23.1730, longitude:88.5643, phone:"+913473253001", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Chakdaha State General Hospital", address:"Chakdaha, Nadia", city:"Chakdaha", latitude:23.0746, longitude:88.5243, phone:"+913472253800", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Santipur State General Hospital", address:"Santipur, Nadia", city:"Santipur", latitude:23.2491, longitude:88.4367, phone:"+913472263300", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Nabadwip State General Hospital", address:"Nabadwip, Nadia", city:"Nabadwip", latitude:23.3968, longitude:88.3638, phone:"+913472240900", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Tehatta Sub-Divisional Hospital", address:"Tehatta, Nadia", city:"Tehatta", latitude:23.7090, longitude:88.5370, phone:"+913472279500", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+
+  // ═══════════════ MURSHIDABAD ═══════════════
+  { name:"Murshidabad Medical College & Hospital", address:"Berhampore, Murshidabad", city:"Berhampore", latitude:24.1009, longitude:88.2501, phone:"+913482251100", departments:["Cardiology","Neurology","Emergency Medicine","General Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.8 },
+  { name:"Berhampore District Hospital", address:"Berhampore, Murshidabad", city:"Berhampore", latitude:24.1050, longitude:88.2480, phone:"+913482251220", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.6 },
+  { name:"Jangipur Sub-Divisional Hospital", address:"Jangipur, Murshidabad", city:"Jangipur", latitude:24.4698, longitude:88.0712, phone:"+913483257777", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Kandi Sub-Divisional Hospital", address:"Kandi, Murshidabad", city:"Kandi", latitude:23.9577, longitude:88.0322, phone:"+913484255400", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Lalbagh Sub-Divisional Hospital", address:"Lalbagh, Murshidabad", city:"Lalbagh", latitude:24.1760, longitude:88.0940, phone:"+913482250180", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Dhulian General Hospital", address:"Dhulian, Murshidabad", city:"Dhulian", latitude:24.6810, longitude:87.9710, phone:"+913485250200", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Raghunathganj Sub-Divisional Hospital", address:"Raghunathganj, Murshidabad", city:"Raghunathganj", latitude:24.4490, longitude:88.0270, phone:"+913483256300", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Domkal Rural Hospital", address:"Domkal, Murshidabad", city:"Domkal", latitude:24.1390, longitude:88.5350, phone:"+913482260400", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Saktinagar Nursing Home Berhampore", address:"Station Road, Berhampore", city:"Berhampore", latitude:24.0988, longitude:88.2560, phone:"+913482253600", departments:["General Medicine","Cardiology","Gynecology","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.7 },
+
+  // ═══════════════ BIRBHUM ═══════════════
+  { name:"Rampurhat Government Medical College", address:"Rampurhat, Birbhum", city:"Rampurhat", latitude:24.1749, longitude:87.7839, phone:"+913461255555", departments:["Cardiology","General Medicine","Emergency Medicine","Gynecology","Trauma Center","Neurology"], emergency_services:true, emergency_available:true, rating:3.7 },
+  { name:"Suri Sadar Hospital", address:"Suri, Birbhum", city:"Suri", latitude:23.9127, longitude:87.5308, phone:"+913462255255", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Bolpur Sub-Divisional Hospital", address:"Bolpur, Birbhum", city:"Bolpur", latitude:23.6691, longitude:87.7139, phone:"+913463252055", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Nalhati Sub-Divisional Hospital", address:"Nalhati, Birbhum", city:"Nalhati", latitude:24.3016, longitude:87.8615, phone:"+913461244100", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Dubrajpur Rural Hospital", address:"Dubrajpur, Birbhum", city:"Dubrajpur", latitude:23.8008, longitude:87.3778, phone:"+913462282200", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Sainthia State General Hospital", address:"Sainthia, Birbhum", city:"Sainthia", latitude:23.9490, longitude:87.6720, phone:"+913462275600", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Md. Saidur Rehman Medical College", address:"Birbhum, West Bengal", city:"Suri", latitude:23.9100, longitude:87.5330, phone:"+913462257000", departments:["Cardiology","Neurology","General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.6 },
+
+  // ═══════════════ PASCHIM BARDHAMAN ═══════════════
+  { name:"Durgapur Steel Plant Hospital", address:"Steel Township, Durgapur", city:"Durgapur", latitude:23.5187, longitude:87.3247, phone:"+913432547100", departments:["Cardiology","Trauma Center","Emergency Medicine","General Medicine"], emergency_services:true, emergency_available:true, rating:4.0 },
+  { name:"Durgapur Mission Hospital", address:"Bidhannagar, Durgapur", city:"Durgapur", latitude:23.5480, longitude:87.3119, phone:"+913432252451", departments:["Cardiology","Emergency Medicine","General Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:4.0 },
+  { name:"Asansol District Hospital", address:"Asansol, Paschim Bardhaman", city:"Asansol", latitude:23.6828, longitude:86.9629, phone:"+913412200120", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center","Cardiology"], emergency_services:true, emergency_available:true, rating:3.7 },
+  { name:"ESI Hospital Asansol", address:"Burnpur Road, Asansol", city:"Asansol", latitude:23.6830, longitude:86.9760, phone:"+913412206050", departments:["General Medicine","Emergency Medicine","Trauma Center","Gynecology"], emergency_services:true, emergency_available:true, rating:3.6 },
+  { name:"Burnpur IISCO Hospital", address:"Burnpur, Asansol", city:"Asansol", latitude:23.6571, longitude:87.0121, phone:"+913412246000", departments:["Cardiology","Emergency Medicine","Trauma Center","General Medicine"], emergency_services:true, emergency_available:true, rating:3.8 },
+  { name:"Raniganj Sub-Divisional Hospital", address:"Raniganj, Paschim Bardhaman", city:"Raniganj", latitude:23.6127, longitude:87.1266, phone:"+913432526200", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Durgapur Sub-Divisional Hospital", address:"City Centre, Durgapur", city:"Durgapur", latitude:23.5503, longitude:87.3236, phone:"+913432251700", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Kulti State General Hospital", address:"Kulti, Paschim Bardhaman", city:"Kulti", latitude:23.7280, longitude:86.8460, phone:"+913412237500", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Andal Rural Hospital", address:"Andal, Paschim Bardhaman", city:"Andal", latitude:23.6040, longitude:87.2060, phone:"+913432535700", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+
+  // ═══════════════ PURBA BARDHAMAN ═══════════════
+  { name:"Burdwan Medical College & Hospital", address:"Burdwan Medical College Road, Bardhaman", city:"Bardhaman", latitude:23.2527, longitude:87.8653, phone:"+913422251020", departments:["Cardiology","Neurology","Trauma Center","Emergency Medicine","General Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.9 },
+  { name:"Bardhaman District Hospital", address:"Hospital Road, Bardhaman", city:"Bardhaman", latitude:23.2534, longitude:87.8700, phone:"+913422251200", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.6 },
+  { name:"Katwa Sub-Divisional Hospital", address:"Katwa, Purba Bardhaman", city:"Katwa", latitude:23.6467, longitude:88.1302, phone:"+913453252400", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Kalna Sub-Divisional Hospital", address:"Kalna, Purba Bardhaman", city:"Kalna", latitude:23.2158, longitude:88.3680, phone:"+913454255200", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Memari State General Hospital", address:"Memari, Purba Bardhaman", city:"Memari", latitude:23.2013, longitude:88.1163, phone:"+913422266300", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Dainhat Rural Hospital", address:"Dainhat, Purba Bardhaman", city:"Dainhat", latitude:23.4890, longitude:88.0480, phone:"+913422275500", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Burdwan Nursing Home", address:"Curzon Gate, Bardhaman", city:"Bardhaman", latitude:23.2540, longitude:87.8660, phone:"+913422256800", departments:["Cardiology","General Medicine","Gynecology","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.7 },
+
+  // ═══════════════ BANKURA ═══════════════
+  { name:"Bankura Sammilani Medical College", address:"Bankura, West Bengal", city:"Bankura", latitude:23.2330, longitude:87.0714, phone:"+913242255270", departments:["Cardiology","Neurology","Trauma Center","Emergency Medicine","General Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.8 },
+  { name:"Bankura Sadar Hospital", address:"Bankura Sadar, Bankura", city:"Bankura", latitude:23.2320, longitude:87.0700, phone:"+913242255010", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Bishnupur Sub-Divisional Hospital", address:"Bishnupur, Bankura", city:"Bishnupur", latitude:23.0779, longitude:87.3178, phone:"+913244252006", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Khatra Sub-Divisional Hospital", address:"Khatra, Bankura", city:"Khatra", latitude:23.0050, longitude:86.8460, phone:"+913242288100", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Sonamukhi Rural Hospital", address:"Sonamukhi, Bankura", city:"Sonamukhi", latitude:23.3010, longitude:87.4130, phone:"+913242276500", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Bankura Christian Hospital", address:"Nutandanga, Bankura", city:"Bankura", latitude:23.2350, longitude:87.0730, phone:"+913242255900", departments:["General Medicine","Cardiology","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:4.0 },
+  { name:"Onda Rural Hospital", address:"Onda, Bankura", city:"Onda", latitude:23.4770, longitude:87.0860, phone:"+913242291300", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.2 },
+
+  // ═══════════════ PURULIA ═══════════════
+  { name:"Purulia Government Medical College", address:"College Para, Purulia", city:"Purulia", latitude:23.3420, longitude:86.3700, phone:"+913252220050", departments:["Cardiology","General Medicine","Emergency Medicine","Gynecology","Neurology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.7 },
+  { name:"Purulia Sadar Hospital", address:"Purulia, West Bengal", city:"Purulia", latitude:23.3353, longitude:86.3661, phone:"+913252222270", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Raghunathpur Sub-Divisional Hospital", address:"Raghunathpur, Purulia", city:"Raghunathpur", latitude:23.5440, longitude:86.6680, phone:"+913255255100", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Jhalda Rural Hospital", address:"Jhalda, Purulia", city:"Jhalda", latitude:23.3972, longitude:86.0556, phone:"+913252278200", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Manbazar Rural Hospital", address:"Manbazar, Purulia", city:"Manbazar", latitude:23.0640, longitude:86.6620, phone:"+913252282000", departments:["General Medicine","Gynecology","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Purulia Mission Hospital", address:"Mission Road, Purulia", city:"Purulia", latitude:23.3370, longitude:86.3690, phone:"+913252221600", departments:["General Medicine","Cardiology","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.8 },
+  { name:"Adra Sub-Divisional Hospital", address:"Adra, Purulia", city:"Adra", latitude:23.5010, longitude:86.6900, phone:"+913252267500", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+
+  // ═══════════════ JHARGRAM ═══════════════
+  { name:"Jhargram Government Medical College", address:"Jhargram, West Bengal", city:"Jhargram", latitude:22.4500, longitude:86.9960, phone:"+913221257000", departments:["Cardiology","General Medicine","Emergency Medicine","Gynecology","Neurology"], emergency_services:true, emergency_available:true, rating:3.7 },
+  { name:"Jhargram District Hospital", address:"Jhargram, West Bengal", city:"Jhargram", latitude:22.4472, longitude:86.9930, phone:"+913221255021", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Binpur Rural Hospital", address:"Binpur, Jhargram", city:"Binpur", latitude:22.3620, longitude:86.6840, phone:"+913221263100", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Gopiballavpur Rural Hospital", address:"Gopiballavpur, Jhargram", city:"Gopiballavpur", latitude:22.0450, longitude:86.9050, phone:"+913221268000", departments:["General Medicine","Gynecology","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Nayagram Rural Hospital", address:"Nayagram, Jhargram", city:"Nayagram", latitude:22.1360, longitude:86.7540, phone:"+913221271500", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.1 },
+
+  // ═══════════════ PASCHIM MEDINIPUR ═══════════════
+  { name:"Midnapore Medical College & Hospital", address:"Vidyasagar Road, Paschim Medinipur", city:"Midnapore", latitude:22.4226, longitude:87.3196, phone:"+913222275451", departments:["Cardiology","Neurology","Trauma Center","Emergency Medicine","General Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.9 },
+  { name:"Midnapore Sadar Hospital", address:"Midnapore Town, Paschim Medinipur", city:"Midnapore", latitude:22.4230, longitude:87.3190, phone:"+913222275100", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.6 },
+  { name:"Ghatal Sub-Divisional Hospital", address:"Ghatal, Paschim Medinipur", city:"Ghatal", latitude:22.6642, longitude:87.7211, phone:"+913227255200", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Kharagpur Sub-Divisional Hospital", address:"Kharagpur, Paschim Medinipur", city:"Kharagpur", latitude:22.3303, longitude:87.3270, phone:"+913222255400", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"IIT Kharagpur Hospital", address:"IIT Campus, Kharagpur", city:"Kharagpur", latitude:22.3160, longitude:87.3107, phone:"+913222282500", departments:["General Medicine","Emergency Medicine","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.7 },
+  { name:"Kharagpur Railway Hospital", address:"Railway Colony, Kharagpur", city:"Kharagpur", latitude:22.3340, longitude:87.3050, phone:"+913222253000", departments:["General Medicine","Emergency Medicine","Trauma Center","Cardiology"], emergency_services:true, emergency_available:true, rating:3.8 },
+  { name:"Keshpur Rural Hospital", address:"Keshpur, Paschim Medinipur", city:"Keshpur", latitude:22.6350, longitude:87.3110, phone:"+913222288400", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Daspur Rural Hospital", address:"Daspur, Paschim Medinipur", city:"Daspur", latitude:22.6180, longitude:87.8030, phone:"+913227260600", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+
+  // ═══════════════ PURBA MEDINIPUR ═══════════════
+  { name:"Tamluk District Hospital", address:"Tamluk, Purba Medinipur", city:"Tamluk", latitude:22.2887, longitude:87.9200, phone:"+913228266258", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Haldia Sub-Divisional Hospital", address:"Haldia, Purba Medinipur", city:"Haldia", latitude:22.0617, longitude:88.0697, phone:"+913224253333", departments:["General Medicine","Emergency Medicine","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Contai Sub-Divisional Hospital", address:"Contai, Purba Medinipur", city:"Contai", latitude:21.7800, longitude:87.7500, phone:"+913220255180", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Egra Sub-Divisional Hospital", address:"Egra, Purba Medinipur", city:"Egra", latitude:21.8967, longitude:87.5369, phone:"+913220254300", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Digha Community Health Centre", address:"Digha, Purba Medinipur", city:"Digha", latitude:21.6276, longitude:87.5100, phone:"+913220267900", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Mecheda Rural Hospital", address:"Mecheda, Purba Medinipur", city:"Mecheda", latitude:22.3990, longitude:87.8780, phone:"+913228270100", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Haldia IOCL Hospital", address:"Haldia Refinery Township", city:"Haldia", latitude:22.0640, longitude:88.0670, phone:"+913224254000", departments:["Cardiology","General Medicine","Emergency Medicine","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.8 },
+
+  // ═══════════════ MALDA ═══════════════
+  { name:"Malda Medical College & Hospital", address:"Malda, West Bengal", city:"Malda", latitude:25.0109, longitude:88.1409, phone:"+913512223000", departments:["Cardiology","Neurology","Trauma Center","Emergency Medicine","General Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.8 },
+  { name:"English Bazar Sadar Hospital", address:"English Bazar, Malda", city:"Malda", latitude:25.0037, longitude:88.1462, phone:"+913512222156", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Chanchal Sub-Divisional Hospital", address:"Chanchal, Malda", city:"Chanchal", latitude:25.3820, longitude:88.0303, phone:"+913512255100", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Old Malda State General Hospital", address:"Old Malda, Malda", city:"Malda", latitude:25.0325, longitude:88.1279, phone:"+913512221500", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Gajole Rural Hospital", address:"Gajole, Malda", city:"Gajole", latitude:25.1650, longitude:88.0940, phone:"+913512264700", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Harishchandrapur Rural Hospital", address:"Harishchandrapur, Malda", city:"Harishchandrapur", latitude:25.2870, longitude:87.8880, phone:"+913512270600", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Malda Nursing Home", address:"Station Road, English Bazar, Malda", city:"Malda", latitude:25.0060, longitude:88.1430, phone:"+913512222900", departments:["Cardiology","General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.7 },
+
+  // ═══════════════ UTTAR DINAJPUR ═══════════════
+  { name:"Raiganj Government Medical College", address:"Raiganj, Uttar Dinajpur", city:"Raiganj", latitude:25.6200, longitude:88.1270, phone:"+913523253000", departments:["Cardiology","Neurology","Emergency Medicine","General Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.7 },
+  { name:"Raiganj District Hospital", address:"Raiganj, Uttar Dinajpur", city:"Raiganj", latitude:25.6181, longitude:88.1244, phone:"+913523251255", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Islampur Sub-Divisional Hospital", address:"Islampur, Uttar Dinajpur", city:"Islampur", latitude:26.2622, longitude:88.1880, phone:"+913523252400", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Dalkhola State General Hospital", address:"Dalkhola, Uttar Dinajpur", city:"Dalkhola", latitude:25.8880, longitude:87.8310, phone:"+913523253600", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Hemtabad Rural Hospital", address:"Hemtabad, Uttar Dinajpur", city:"Hemtabad", latitude:25.4980, longitude:88.1050, phone:"+913523252700", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Itahar Rural Hospital", address:"Itahar, Uttar Dinajpur", city:"Itahar", latitude:25.5450, longitude:88.2330, phone:"+913523258600", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.2 },
+
+  // ═══════════════ DAKSHIN DINAJPUR ═══════════════
+  { name:"Balurghat Medical College", address:"Balurghat, Dakshin Dinajpur", city:"Balurghat", latitude:25.2180, longitude:88.7760, phone:"+913522255000", departments:["Cardiology","Neurology","Emergency Medicine","General Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.7 },
+  { name:"Balurghat District Hospital", address:"Balurghat, Dakshin Dinajpur", city:"Balurghat", latitude:25.2152, longitude:88.7731, phone:"+913522253511", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Gangarampur Sub-Divisional Hospital", address:"Gangarampur, Dakshin Dinajpur", city:"Gangarampur", latitude:25.4050, longitude:88.5280, phone:"+913522261500", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Tapan Rural Hospital", address:"Tapan, Dakshin Dinajpur", city:"Tapan", latitude:25.1530, longitude:88.3260, phone:"+913522268200", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Kushmandi Rural Hospital", address:"Kushmandi, Dakshin Dinajpur", city:"Kushmandi", latitude:25.2870, longitude:88.6370, phone:"+913522271400", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Hili Rural Hospital", address:"Hili, Dakshin Dinajpur", city:"Hili", latitude:25.2810, longitude:88.9710, phone:"+913522274300", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.1 },
+
+  // ═══════════════ JALPAIGURI ═══════════════
+  { name:"Jalpaiguri Government Medical College", address:"Jalpaiguri, West Bengal", city:"Jalpaiguri", latitude:26.5460, longitude:88.7250, phone:"+913561224000", departments:["Cardiology","Neurology","Emergency Medicine","General Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.8 },
+  { name:"Jalpaiguri District Hospital", address:"Jalpaiguri, West Bengal", city:"Jalpaiguri", latitude:26.5424, longitude:88.7208, phone:"+913561222450", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.6 },
+  { name:"Mal Sub-Divisional Hospital", address:"Mal, Jalpaiguri", city:"Mal", latitude:26.8490, longitude:88.7090, phone:"+913561253600", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Dhupguri State General Hospital", address:"Dhupguri, Jalpaiguri", city:"Dhupguri", latitude:26.5820, longitude:89.0140, phone:"+913564253100", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Mainaguri State General Hospital", address:"Mainaguri, Jalpaiguri", city:"Mainaguri", latitude:26.5620, longitude:88.8210, phone:"+913561267200", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Falakata Rural Hospital", address:"Falakata, Jalpaiguri", city:"Falakata", latitude:26.5190, longitude:89.1980, phone:"+913564256800", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Malbazar Rural Hospital", address:"Malbazar, Jalpaiguri", city:"Malbazar", latitude:26.8750, longitude:88.7360, phone:"+913561259400", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Rajganj Rural Hospital", address:"Rajganj, Jalpaiguri", city:"Rajganj", latitude:26.7200, longitude:88.2440, phone:"+913561271600", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.1 },
+
+  // ═══════════════ ALIPURDUAR ═══════════════
+  { name:"Alipurduar District Hospital", address:"Alipurduar, West Bengal", city:"Alipurduar", latitude:26.4902, longitude:89.5274, phone:"+913564255444", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Alipurduar Sub-Divisional Hospital", address:"Alipurduar-II, West Bengal", city:"Alipurduar", latitude:26.4920, longitude:89.5300, phone:"+913564256000", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Birpara State General Hospital", address:"Birpara, Alipurduar", city:"Birpara", latitude:26.4950, longitude:89.3990, phone:"+913564267100", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Madarihat Rural Hospital", address:"Madarihat, Alipurduar", city:"Madarihat", latitude:26.6120, longitude:89.5100, phone:"+913564272500", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Kalchini Rural Hospital", address:"Kalchini, Alipurduar", city:"Kalchini", latitude:26.6780, longitude:89.4420, phone:"+913564270800", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Kumargram Rural Hospital", address:"Kumargram, Alipurduar", city:"Kumargram", latitude:26.6440, longitude:89.8320, phone:"+913564279300", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.1 },
+
+  // ═══════════════ COOCH BEHAR ═══════════════
+  { name:"MJN Hospital Cooch Behar", address:"MJN Hospital Road, Cooch Behar", city:"Cooch Behar", latitude:26.3471, longitude:89.4410, phone:"+913582224000", departments:["Cardiology","General Medicine","Emergency Medicine","Gynecology","Neurology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.7 },
+  { name:"Cooch Behar District Hospital", address:"MBC Road, Cooch Behar", city:"Cooch Behar", latitude:26.3452, longitude:89.4432, phone:"+913582222525", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Dinhata Sub-Divisional Hospital", address:"Dinhata, Cooch Behar", city:"Dinhata", latitude:26.1312, longitude:89.4669, phone:"+913582252400", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Mathabhanga Sub-Divisional Hospital", address:"Mathabhanga, Cooch Behar", city:"Mathabhanga", latitude:26.3510, longitude:89.2140, phone:"+913582265300", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Tufanganj Sub-Divisional Hospital", address:"Tufanganj, Cooch Behar", city:"Tufanganj", latitude:26.3321, longitude:89.6666, phone:"+913582280100", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Mekhliganj Rural Hospital", address:"Mekhliganj, Cooch Behar", city:"Mekhliganj", latitude:26.6090, longitude:89.6340, phone:"+913582290400", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Sitai Rural Hospital", address:"Sitai, Cooch Behar", city:"Sitai", latitude:26.1980, longitude:89.3580, phone:"+913582295600", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.1 },
+
+  // ═══════════════ DARJEELING ═══════════════
+  { name:"North Bengal Medical College & Hospital", address:"Sushrutanagar, Siliguri", city:"Siliguri", latitude:26.6862, longitude:88.3741, phone:"+913532522600", departments:["Cardiology","Neurology","Trauma Center","Emergency Medicine","General Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.9 },
+  { name:"Siliguri District Hospital", address:"Hospital Road, Siliguri", city:"Siliguri", latitude:26.7197, longitude:88.4278, phone:"+913532533560", departments:["Cardiology","Emergency Medicine","General Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.8 },
+  { name:"Darjeeling District Hospital", address:"Darjeeling, West Bengal", city:"Darjeeling", latitude:27.0410, longitude:88.2663, phone:"+913542252131", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.7 },
+  { name:"Darjeeling Eden Hospital", address:"Gandhi Road, Darjeeling", city:"Darjeeling", latitude:27.0390, longitude:88.2630, phone:"+913542253505", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.6 },
+  { name:"North Bengal Clinic Siliguri", address:"Hill Cart Road, Siliguri", city:"Siliguri", latitude:26.7150, longitude:88.4290, phone:"+913532531000", departments:["Cardiology","Neurology","Emergency Medicine","General Medicine"], emergency_services:true, emergency_available:true, rating:4.0 },
+  { name:"Siliguri Nursing Home", address:"Sevoke Road, Siliguri", city:"Siliguri", latitude:26.7120, longitude:88.4340, phone:"+913532535000", departments:["Cardiology","General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.8 },
+  { name:"Kurseong Sub-Divisional Hospital", address:"Kurseong, Darjeeling", city:"Kurseong", latitude:26.8800, longitude:88.2780, phone:"+913542244200", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.4 },
+  { name:"Mirik State General Hospital", address:"Mirik, Darjeeling", city:"Mirik", latitude:26.8860, longitude:88.1840, phone:"+913542247800", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Panitanki Rural Hospital", address:"Panitanki, Darjeeling", city:"Panitanki", latitude:26.9140, longitude:88.1230, phone:"+913532267300", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.3 },
+  { name:"Naxalbari Rural Hospital", address:"Naxalbari, Darjeeling", city:"Naxalbari", latitude:26.8780, longitude:88.2310, phone:"+913532261800", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+
+  // ═══════════════ KALIMPONG ═══════════════
+  { name:"Kalimpong District Hospital", address:"Rinkingpong Road, Kalimpong", city:"Kalimpong", latitude:27.0660, longitude:88.4693, phone:"+913552255293", departments:["General Medicine","Emergency Medicine","Gynecology","Trauma Center"], emergency_services:true, emergency_available:true, rating:3.5 },
+  { name:"Gorubathan Rural Hospital", address:"Gorubathan, Kalimpong", city:"Gorubathan", latitude:26.8870, longitude:88.6750, phone:"+913552265700", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.2 },
+  { name:"Lava Community Health Centre", address:"Lava, Kalimpong", city:"Kalimpong", latitude:27.0780, longitude:88.6640, phone:"+913552267800", departments:["General Medicine","Emergency Medicine"], emergency_services:true, emergency_available:true, rating:3.1 },
+  { name:"Pedong Rural Hospital", address:"Pedong, Kalimpong", city:"Pedong", latitude:27.1240, longitude:88.5980, phone:"+913552271200", departments:["General Medicine","Emergency Medicine","Gynecology"], emergency_services:true, emergency_available:true, rating:3.1 },
+];
 
 app.listen(PORT, () => {
   console.log(`🚑 Smart Emergency running on port ${PORT}`);

@@ -45,7 +45,8 @@ function renderDetails(h) {
   ).join('');
 
   // Action buttons
-  document.getElementById('callBtn').href = `tel:${h.phone}`;
+  
+    document.getElementById('callBtn').href = `tel:${h.phone}`;
   document.getElementById('directionsBtn').href =
     `https://www.google.com/maps/dir/?api=1&destination=${h.latitude},${h.longitude}`;
   document.getElementById('mapBtn').href =
@@ -61,9 +62,9 @@ function renderDetails(h) {
 function initDetailMap(h) {
   const map = L.map('detailMap').setView([h.latitude, h.longitude], 15);
 
-  // Dark tile layer
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
+  // Satellite tile layer
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '© <a href="https://www.esri.com/">Esri</a> | Satellite Imagery'
   }).addTo(map);
 
   // Hospital marker

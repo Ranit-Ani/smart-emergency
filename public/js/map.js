@@ -9,8 +9,8 @@ async function initMap() {
   // Default center: Kolkata
   mainMap = L.map('mainMap').setView([22.5726, 88.3639], 12);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '© <a href="https://www.esri.com/">Esri</a> | Satellite Imagery'
   }).addTo(mainMap);
 
   await loadMapHospitals();
